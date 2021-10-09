@@ -34,8 +34,8 @@ set "choice="
 echo OfflineInsiderEnroll v%scriptver%
 echo.
 echo R - Enroll to Release Preview ring
-echo S - Enroll to Insider Slow ring
-echo F - Enroll to Insider Fast ring
+echo S - Enroll to Beta Channel ring
+echo F - Enroll to Dev Channel ring
 echo.
 echo X - Stop receiving Insider Preview builds
 echo Q - Quit without making any changes
