@@ -57,25 +57,25 @@ set "FancyRing=Release Preview"
 goto :ENROLL
 
 :ENROLL_SLOW
-set "SLS=RingInsiderSlow"
+set "SLS=RingBeta"
 set "Ring=WIS"
 set "Content=Active"
-set "FancyRing=Windows Insider Slow"
+set "FancyRing=Windows Beta Channel"
 goto :ENROLL
 
 :ENROLL_FAST
-set "SLS=RingInsiderFast"
+set "SLS=RingDev"
 set "Ring=WIF"
 set "Content=Active"
-set "FancyRing=Windows Insider Fast"
+set "FancyRing=Windows Dev Channel"
 goto :ENROLL
 
 :RESET_INSIDER_CONFIG
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WindowsSelfHost" /f >NUL 2>&1
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\WUMUDCat" /f >NUL 2>&1
 reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\RingPreview" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\RingInsiderSlow" /f >NUL 2>&1
-reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\RingInsiderFast" /f >NUL 2>&1
+reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\RingBeta" /f >NUL 2>&1
+reg delete "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\SLS\Programs\RingDev" /f >NUL 2>&1
 goto :EOF
 
 :ENROLL
