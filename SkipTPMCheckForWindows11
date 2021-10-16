@@ -9,7 +9,7 @@
 #:: hence the on off toggle just by running the script again
 
 $_Paste_in_Powershell = {
-  $N = 'Skip TPM Check on Dynamic Update'
+  $N = 'Skip TPM Check on Dynamic Update By Edward'
   $0 = sp 'HKLM:\SYSTEM\Setup\MoSetup' 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
   $B = gwmi -Class __FilterToConsumerBinding -Namespace 'root\subscription' -Filter "Filter = ""__eventfilter.name='$N'""" -ea 0
   $C = gwmi -Class CommandLineEventConsumer -Namespace 'root\subscription' -Filter "Name='$N'" -ea 0
