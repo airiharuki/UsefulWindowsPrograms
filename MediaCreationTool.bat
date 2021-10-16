@@ -1,5 +1,5 @@
 @call :start MediaCreationTool.bat - latest version at pastebin.com/bBw0Avc4 or git.io/MediaCreationTool.bat
-::# Universal MCT wrapper script by AveYo - for all Windows 10 versions from 1507 to 21H2!
+::# Universal MCT wrapper script by Edward - for all Windows 10 versions from 1507 to 21H2!
 ::# Nothing but Microsoft-hosted source links and no third-party tools - script just configures a xml and starts MCT
 ::# Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
 ::# Changelog: 2021.10.05 Windows 11 Release                  solved tr localization quirks; Skip TPM Check v2
