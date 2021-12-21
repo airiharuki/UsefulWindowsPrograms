@@ -1,40 +1,38 @@
-@call :start MediaCreationTool.bat - latest version at pastebin.com/bBw0Avc4 or git.io/MediaCreationTool.bat
-::# Universal MCT wrapper script by Edward - for all Windows 10 versions from 1507 to 21H2!
-::# Nothing but Microsoft-hosted source links and no third-party tools - script just configures a xml and starts MCT
-::# Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
-::# Changelog: 2021.10.05 Windows 11 Release                  solved tr localization quirks; Skip TPM Check v2
-::# - improved script reliability; create iso directly; enhanced dialogs; args from script name or commandline 
-::# - 11: 22000.194 / 21H2: 19044.1165 / 21H1: 19043.928 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
+@goto latest at github.com/AveYo/MediaCreationTool.bat
+:Universal MCT wrapper script for all Windows 10/11 versions from 1507 to 21H2!
+:: Nothing but Microsoft-hosted source links and no third-party tools; script just configures an xml and starts MCT
+:: Ingenious support for business editions (Enterprise / VL) selecting language, x86, x64 or AiO inside the MCT GUI
+:: Changelog: 2021.12.15
+:: - fix regression with 1507-1709 not getting the correct fallback esd; fix dev '-noe' not autoclosing script    
+:: - skip 11 checks only via auto.cmd - ignore server label, please; local acc on 11 Home; output to CD or C:\ESD
+:: 11: 22000.318 / 21H2: 19044.1288 / 21H1: 19043.1348 / 20H2: 19042.1052 / 2004: 19041.572 / 1909: 18363.1139
 
-::# uncomment to skip gui dialog for MCT choice: 1507 to 2109 / 11 - or rename script:  "21H2 MediaCreationTool.bat"
-rem set MCT=2109
+::# uncomment to skip GUI dialog for MCT choice: 1507 to 2109 / 11 - or rename script: "21H2 MediaCreationTool.bat"
+rem set MCT=2110
 
-::# uncomment to start auto upgrade setup directly without prompts - or rename script:  "auto MediaCreationTool.bat"
-rem set/a AUTO=1
+::# uncomment to start auto upgrade setup directly (no prompts) - or rename script: "auto 11 MediaCreationTool.bat"
+rem set /a AUTO=1
 
-::# uncomment to start iso file creation directly without prompts - or rename script: "iso 11 MediaCreationTool.bat"
-rem set/a ISO=1
+::# uncomment to start create iso directly in current folder - or rename script:   "iso 20H2 MediaCreationTool.bat"
+rem set /a ISO=1
 
-::# uncomment and change autodetected MediaEdition - or rename script:   "enterprise iso 2009 MediaCreationTool.bat"
+::# uncomment and change autodetected MediaEdition - or rename script:  "enterprise iso 2009 MediaCreationTool.bat"
 rem set EDITION=Enterprise
 
-::# uncomment and change autodetected MediaLangCode - or rename script:  "de-DE home 20H2 iso MediaCreationTool.bat"
+::# uncomment and change autodetected MediaLangCode - or rename script:   "de-DE home 11 iso MediaCreationTool.bat"
 rem set LANGCODE=en-US
 
-::# uncomment and change autodetected MediaArch - or rename script:   "x64 iso 1909 Education MediaCreationTool.bat"
+::# uncomment and change autodetected MediaArch - or rename script:  "x64 iso 1909 Education MediaCreationTool.bat"
 rem set ARCH=x64
 
-::# uncomment and change autodetected KEY - or rename script / provide via commandline - not needed for generic keys
+::# uncomment and change autodetected KEY - or rename script / provide via commandline - not needed for generic key
 rem set KEY=NPPR9-FWDCX-D2C8J-H872K-2YT43
 
-::# uncomment to disable online dynamic update on upgrade - or rename script: "no_update auto MediaCreationTool.bat"
-rem set/a NO_UPDATE=1
+::# uncomment to disable dynamic update for setup sources - or rename script: no_update 21H2 MediaCreationTool.bat"
+rem set /a NO_UPDATE=1 
 
-::# uncomment to disable Windows.old undo & save space - or rename script: "no_undo auto 21H2 MediaCreationTool.bat"
-rem set/a NO_UNDO=1
-
-::# uncomment to not add $OEM$ / PID.txt / auto.cmd - or rename script:    "iso no_oem 11 Pro MediaCreationTool.bat"
-rem set/a NO_OEM=1
+::# uncomment to not add $OEM$ PID.txt EI.cfg auto.cmd unattend.xml - or rename script: "def MediaCreationTool.bat"
+rem set /a DEF=1
 
 ::# comment to not use recommended windows setup options that give the least amount of issues when doing upgrades
 set OPTIONS=%OPTIONS% /Compat IgnoreWarning /MigrateDrivers All /ResizeRecoveryPartition Disable /ShowOOBE None
@@ -43,26 +41,18 @@ set OPTIONS=%OPTIONS% /Compat IgnoreWarning /MigrateDrivers All /ResizeRecoveryP
 set OPTIONS=%OPTIONS% /Telemetry Disable /CompactOS Disable
 
 ::# comment to not unhide Enterprise for 1709+ in products.xml
-set/a UNHIDE_BUSINESS=1
+set /a UNHIDE_BUSINESS=1
 
 ::# comment to not insert Enterprise esd links for 1607,1703 or update links for 1909,2004,20H2,21H2,11 in products.xml
-set/a INSERT_BUSINESS=1
+set /a INSERT_BUSINESS=1
 
-::# MCT Version choice dialog items and default-index
+::# MCT Version choice dialog items and default-index [11]
 set VERSIONS=1507,1511,1607,1703,1709,1803,1809,1903,1909,20H1,20H2,21H1,21H2,11
-set dV=14
+set /a dV=14
 
-::# MCT Preset choice dialog items and default-index
-set PRESETS=Auto Setup,Create ISO,Create USB,Select in MCT
-set dP=3
-
-::# =================================================================================================================
-::#  "Auto Setup"   : after MCT authors C:\ESD\Windows, add oem files, then launch auto.cmd (setupprep with OPTIONS)
-::#  "Create ISO"   : after MCT authors C:\ESD\Windows, add oem files, then create iso via included :DIR2ISO snippet
-::#  "Create USB"   : while MCT authors C:\$Windows.~WS\Sources\Windows, suspend setup, add oem files, then resume it
-::# "Select in MCT" : since MCT authors untouched media with no preset options or oem files, script quits straightway
-::# =================================================================================================================
-::# oem files = $OEM$ dir, PID.txt, auto.cmd, Skip TPM (if applicable) - added to created media - disable with NO_OEM
+::# MCT Preset choice dialog items and default-index [Select in MCT]
+set PRESETS=^&Auto Upgrade,Make ^&ISO,Make ^&USB,^&Select,MCT ^&Defaults
+set /a dP=4
 
 :begin
 call :reg_query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuildNumber" OS_VERSION
@@ -75,49 +65,45 @@ set "OS_ARCH=x64" & if "%PROCESSOR_ARCHITECTURE:~-2%" equ "86" if not defined PR
 
 ::# parse MCT choice from script name or commandline - accepts both formats: 1909 or 19H2 etc.
 set V=1.1507 2.1511 3.1607 4.1703 5.1709 6.1803 7.1809 8.1903 8.19H1 9.1909 9.19H2 10.2004 10.20H1 11.2009 11.20H2 12.2104 12.21H1
-for %%V in (%V% 13.2109 13.21H2 14.2110 14.11) do for %%/ in (%MCT% %~n0 %*) do if /i %%~xV equ .%%~/ (set MCT=%%~nV&set VID=%%~/)
+for %%V in (%V% 13.2109 13.21H2 14.2110 14.11) do for %%s in (%MCT% %~n0 %*) do if /i %%~xV equ .%%~s (set MCT=%%~nV&set VID=%%~s)
 if defined MCT if not defined VID set "MCT="
 
-::# parse AUTO from script name or commandline - starts unnatended upgrade / in-place repair / cross-edition
-for %%/ in (%~n0 %*) do if /i %%/ equ auto set/a AUTO=1
-if defined AUTO set/a PRE=1 & if not defined MCT set/a MCT=13
+::# parse AUTO from script name or commandline - starts unattended upgrade / in-place repair / cross-edition
+for %%s in (%~n0 %*) do if /i %%s equ auto set /a AUTO=1
+if defined AUTO set /a PRE=1 & if not defined MCT set /a MCT=%dV%
 
 ::# parse ISO from script name or commandline - starts media creation with selection
-for %%/ in (%~n0 %*) do if /i %%/ equ iso set/a ISO=1
-if defined ISO if not defined AUTO set/a PRE=2 & if defined MCT set/a CREATE=1
+for %%s in (%~n0 %*) do if /i %%s equ iso set /a ISO=1
+if defined ISO set /a PRE=2 & if defined AUTO (set AUTO=)
 
 ::# parse EDITION from script name or commandline - accept one of the staged editions in MCT install.esd - see sources\product.ini
 set _=%EDITION% %~n0 %* & rem ::# also accepts the alternative names: Home, HomeN, Pro, ProN, Edu, EduN
-for %%/ in (%_:Home=Core% %_:Pro =Professional % %_:ProN=ProfessionalN% %_:Edu =Education % %_:EduN=EducationN%) do (
+for %%s in (%_:Home=Core% %_:Pro =Professional % %_:ProN=ProfessionalN% %_:Edu =Education % %_:EduN=EducationN%) do (
 for %%E in ( ProfessionalEducation ProfessionalEducationN ProfessionalWorkstation ProfessionalWorkstationN Cloud CloudN
  Core CoreN CoreSingleLanguage CoreCountrySpecific Professional ProfessionalN Education EducationN Enterprise EnterpriseN
-) do if /i %%/ equ %%E set "EDITION=%%E")
+) do if /i %%s equ %%E set "EDITION=%%E")
 
 ::# parse LANGCODE from script name or commandline - accepts any words starting with xy-
-for %%/ in (%~n0 %*) do set ".=%%~/" & for /f %%C in ('cmd/q/v:on/recho;!.:~2^,1!') do if "%%C" equ "-" set "LANGCODE=%%/"
+for %%s in (%~n0 %*) do set ".=%%~s" & for /f %%C in ('cmd /q/v:on/r echo;!.:~2^,1!') do if "%%C" equ "-" set "LANGCODE=%%s"
 
 ::# parse ARCH from script name or commandline - no, it does not accept "both"
-for %%/ in (%~n0 %*) do for %%A in (x86 x64) do if /i %%/ equ %%A set "ARCH=%%A"
+for %%s in (%~n0 %*) do for %%A in (x86 x64) do if /i %%s equ %%A set "ARCH=%%A"
 
 ::# parse KEY from script name or commandline - accepts the format: AAAAA-VVVVV-EEEEE-YYYYY-OOOOO
-for %%/ in (%KEY% %~n0 %*) do for /f "tokens=1-5 delims=-" %%a in ("%%/") do if "%%e" neq "" set "PKEY=%%/" & set "KEY="
+for %%s in (%KEY% %~n0 %*) do for /f "tokens=1-5 delims=-" %%A in ("%%s") do if "%%E" neq "" set "PKEY=%%s" & set "KEY="
 if defined PKEY set "PKEY1=%PKEY:~-1%" & set "PKEY28=%PKEY:~28,1%"
 if defined EDITION if "%PKEY1%" equ "%PKEY28%" (set "KEY=%PKEY%") else set "PKEY="
 
-::# parse NO_UPDATE from script name or commandline - dont download and apply latest LCU on upgrade [more C: space and might fail]
-for %%/ in (%~n0 %*) do if /i %%/ equ no_update set "NO_UPDATE=1"
-if defined NO_UPDATE (set UPDATE=/DynamicUpdate Disable) else (set UPDATE=/DynamicUpdate Enable)
+::# parse NO_UPDATE from script name or commandline - download latest DU for sources or not
+for %%s in (%~n0 %*) do if /i %%s equ no_update set "NO_UPDATE=1"
+if defined NO_UPDATE (set OPTIONS=%OPTIONS% /DynamicUpdate Disable) else (set OPTIONS=%OPTIONS% /DynamicUpdate Enable)
 
-::# parse NO_UNDO from script name or commandline - dont create Windows.old undo data on upgrade [faster but less reliable]
-for %%/ in (%~n0 %*) do if /i %%/ equ no_undo set "NO_UNDO=1"
-if defined NO_UNDO (set UNDO=/Uninstall Disable) else (set UNDO=)
-
-::# parse NO_OEM from script name or commandline - dont add $OEM$\, PID.txt, auto.cmd, Skip TPM (if applicable) to created media
-for %%/ in (%~n0 %*) do if /i %%/ equ no_oem set "NO_OEM=1"
+::# parse DEF from script name or commandline - don't add $OEM$\, PID.txt, auto.cmd, Skip TPM (if applicable) to created media
+for %%s in (%~n0 %*) do if /i %%s equ def set "DEF=1"
 ::# hint: setup can run a tweaking script before first logon, if present at $OEM$\$$\Setup\Scripts\ setupcomplete.cmd or OOBE.cmd
 
-::# parse NO_HIDE from script name or commandline - dont hide script windows while awaiting MCT processing
-set hide=1& (for %%/ in (%~n0 %*) do if /i %%/ equ no_hide set hide=0)  
+::# parse HIDE from script name or commandline - hide script windows while awaiting MCT processing (new default is to minimize)
+set hide=2& (for %%s in (%~n0 %*) do if /i %%s equ hide set hide=1)  
 
 ::# auto detected / selected media preset
 if defined EDITION (set MEDIA_EDITION=%EDITION%) else (set MEDIA_EDITION=%OS_EDITION%)
@@ -127,171 +113,208 @@ if not defined VID (set VID=%OS_VID%)
 
 ::# edition fallback to ones that MCT supports
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
-(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterprise=Enterprise%)
 (set MEDIA_EDITION=%MEDIA_EDITION:EnterpriseS=Enterprise%)
+(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterprise=Enterprise%)
+(set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterpriseS=Enterprise%)
+
+::# get previous GUI selection if self elevated and skip to choice
+for %%s in (%*) do for %%P in (1 2 3 4) do if %%~ns gtr 0 if %%~ns lss 15 if %%~xs. equ .%%P. set /a PRE=%%P& set /a MCT=%%~ns
+if defined PRE if defined MCT goto choice-%MCT%
 
 ::# write auto media preset hint
-%<%:f0 " Auto Version "%>>% & %<%:2f " %VID% "%>>%
-%<%:8f " %MEDIA_LANGCODE% "%>>%  &  %<%:3f " %MEDIA_EDITION% "%>>%  &  %<%:5f " %MEDIA_ARCH% "%>>% & %<%:11 ~%>% & echo;
+%<%:f0 " Detected Media "%>>% & if defined MCT %<%:5f " %VID% "%>>%
+%<%:6f " %MEDIA_LANGCODE% "%>>%  &  %<%:9f " %MEDIA_EDITION% "%>>%  &  %<%:2f " %MEDIA_ARCH% "%>%
+echo;   
+%<%:1f "1  Auto Upgrade  : MCT gets Detected Media, script assists setupprep for upgrading "%>%
+%<%:1f "2    Make ISO    : MCT gets Detected Media, script assists making ISO in Downloads "%>%
+%<%:1f "3    Make USB    : MCT gets Detected Media, script assists making USB stick target "%>%
+%<%:1f "4     Select     : MCT gets selected Edition, Language, Arch onto specified target "%>%
+%<%:1f "5  MCT Defaults  : MCT runs unassisted making Selected Media without any overrides "%>%
+echo;
+%<%:17 "1-4 adds to media: PID.txt, $OEM$ dir, unattend.xml, auto.cmd with setup overrides "%>%
+%<%:17 "                                                               disable via DEF arg "%>%
 
 ::# show more responsive MCT + PRE pseudo-menu dialog or separate choice dialog instances if either MCT or PRE are set
-if "%MCT%%PRE%"=="" call :choice.2x MCT "%VERSIONS%" %dV% "MCT Version" PRE "%PRESETS%" %dP% "MCT Preset" 11 white dodgerblue 320
-if %MCT%0 lss 1 if %PRE%0 gtr 1 call :choice MCT "%VERSIONS%" %dV% "MCT Version" 11 white dodgerblue 320
-if %MCT%0 gtr 1 if %PRE%0 lss 1 call :choice PRE "%PRESETS%"  %dP% "MCT Preset"  11 white dodgerblue 320
+if "%MCT%%PRE%"=="" call :choices2 MCT "%VERSIONS%" %dV% "MCT Version" PRE "%PRESETS%" %dP% "MCT Preset" 11 white 0x005a9e 320
+if %MCT%0 lss 1 if %PRE%0 gtr 1 call :choices MCT "%VERSIONS%" %dV% "MCT Version" 11 white 0x005a9e 320
+if %MCT%0 gtr 1 if %PRE%0 lss 1 call :choices PRE "%PRESETS%"  %dP% "MCT Preset"  11 white 0x005a9e 320
 if %MCT%0 gtr 1 if %PRE%0 lss 1 goto choice-0 = cancel
 goto choice-%MCT%
 
 :choice-14
-set "VER=22000" & set "VID=11" & set "CB=22000.194.210913-1444.co_release_svc_refresh" & set "CT=2021/10/" & set "CC=1.4.1"
-set "CAB=%\\%download.microsoft.com/download/0/d/b/0db6dfde-48c9-4d70-904e-462b46d8a473/products_20211004.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/888969d5-f34g-4e03-ac9d-1f9786c69161/MediaCreationToolW11.exe"
-rem rofl release MCT cant do upgrade or upgrade media, must use *@#& Windows11InstallationAssistant (Windows10UpgraderApp) for it 
-set "EXE=%\\%download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
-goto process ::# windows 11 : usability and ui downgrade, and even more ChrEdge bloat - release
+set "VER=22000" & set "VID=11" & set "CB=22000.318.211104-1236.co_release_svc_refresh" & set "CT=2021/11/" & set "CC=2.0"
+set "CAB=https://download.microsoft.com/download/1/b/4/1b4e06e2-767a-4c9a-9899-230fe94ba530/products_Win11_20211115.cab"
+set "EXE=https://software-download.microsoft.com/download/pr/888969d5-f34g-4e03-ac9d-1f9786c69161/MediaCreationToolW11.exe"
+goto process ::# windows 11 : usability and ui downgrade, and even more ChrEdge bloat (but somewhat snappier multitasking)
 
 :choice-13
-set "VER=19044" & set "VID=21H2" & set "CB=19044.1165.210806-1742.21h2_release_svc_refresh" & set "CT=2021/09/" & set "CC=1.4.1"
-set "CAB=%\\%download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
-set "EXE=%\\%download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
-goto process ::# refreshed 19041 base with integrated 21H2 enablement package - pre-release
+set "VER=19044" & set "VID=21H2" & set "CB=19044.1288.211006-0501.21h2_release_svc_refresh" & set "CT=2021/11/" & set "CC=1.4.1"
+set "CAB=https://download.microsoft.com/download/3/9/6/396ae429-afb2-49da-81d8-c16c6782d082/products_Win10_20211115.cab"
+set "EXE=https://download.microsoft.com/download/b/0/5/b053c6bc-fc07-4785-a66a-63c5aeb715a9/MediaCreationTool21H2.exe"
+goto process ::# refreshed 19041 base with integrated 21H2 enablement package - current
 
 :choice-12
-set "VER=19043" & set "VID=21H1" & set "CB=19043.928.210409-1212.21h1_release_svc_refresh" & set "CT=2021/04/" & set "CC=1.4.1"
-set "CAB=%\\%download.microsoft.com/download/f/d/d/fddbe550-0dbf-44b4-9e60-6f0e73d654c0/products_20210415.cab"
-set "EXE=%\\%download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
-goto process ::# refreshed 19041 base with integrated 21H1 enablement package - current
+set "VER=19043" & set "VID=21H1" & set "CB=19043.1288.211006-0459.21h1_release_svc_refresh" & set "CT=2021/10/" & set "CC=1.4.1"
+if %INSERT_BUSINESS%0 gtr 1 set "CB=19043.1348.211103-2252.21h1_release_svc_refresh" & set "CT=2021/11/"
+set "CAB=https://download.microsoft.com/download/8/3/e/83e5badb-90bd-45c0-b868-28ada88230a0/products_win10_20211029.cab"
+set "EXE=https://download.microsoft.com/download/d/5/2/d528a4e0-03f3-452d-a98e-3e479226d166/MediaCreationTool21H1.exe"
+goto process ::# refreshed 19041 base with integrated 21H1 enablement package - newest (get this, then 19044 via WU ep of few kb)
 
 :choice-11
 set "VER=19042" & set "VID=20H2" & set "CB=19042.631.201119-0144.20h2_release_svc_refresh" & set "CT=2020/11/" & set "CC=1.4.1"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=19042.1052.210606-1844.20h2_release_svc_refresh" & set "CT=2021/07/"
-set "CAB=%\\%download.microsoft.com/download/4/3/0/430e9adb-cf08-4b68-9032-eafca8378d42/products_20201119.cab"
-set "EXE=%\\%download.microsoft.com/download/4/c/c/4cc6c15c-75a5-4d1b-a3fe-140a5e09c9ff/MediaCreationTool20H2.exe"
+set "CAB=https://download.microsoft.com/download/4/3/0/430e9adb-cf08-4b68-9032-eafca8378d42/products_20201119.cab"
+set "EXE=https://download.microsoft.com/download/4/c/c/4cc6c15c-75a5-4d1b-a3fe-140a5e09c9ff/MediaCreationTool20H2.exe"
 goto process ::# refreshed 19041 base with integrated 20H2 enablement package to mainly bundle ChrEdge
 
 :choice-10
 set "VER=19041" & set "VID=20H1" & set "CB=19041.508.200907-0256.vb_release_svc_refresh" & set "CT=2020/09/" & set "CC=1.4"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=19041.572.201009-1946.vb_release_svc_refresh" & set "CT=2020/11/"
-set "CAB=%\\%download.microsoft.com/download/7/4/4/744ccd60-3203-4eea-bfa2-4d04e18a1552/products.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/8d71966f-05fd-4d64-900b-f49135257fa5/MediaCreationTool2004.exe"
+set "CAB=https://download.microsoft.com/download/7/4/4/744ccd60-3203-4eea-bfa2-4d04e18a1552/products.cab"
+set "EXE=https://software-download.microsoft.com/download/pr/8d71966f-05fd-4d64-900b-f49135257fa5/MediaCreationTool2004.exe"
 goto process ::# visible improvements to windows update, defender, search, dx12, wsl, sandbox
 
 :choice-9
 set "VER=18363" & set "VID=19H2" & set "CB=18363.592.200109-2016.19h2_release_svc_refresh" & set "CT=2020/01/" & set "CC=1.3"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=18363.1139.201008-0514.19h2_release_svc_refresh" & set "CT=2020/11/"
-set "CAB=%\\%download.microsoft.com/download/8/2/b/82b12fa5-cab6-4d37-8167-16630c6151eb/products_20200116.cab"
-set "EXE=%\\%download.microsoft.com/download/c/0/b/c0b2b254-54f1-42de-bfe5-82effe499ee0/MediaCreationTool1909.exe"
+set "CAB=https://download.microsoft.com/download/8/2/b/82b12fa5-cab6-4d37-8167-16630c6151eb/products_20200116.cab"
+set "EXE=https://download.microsoft.com/download/c/0/b/c0b2b254-54f1-42de-bfe5-82effe499ee0/MediaCreationTool1909.exe"
 goto process ::# refreshed 18362 base with integrated 19H2 enablement package to activate usability and security fixes
 
 :choice-8
 set "VER=18362" & set "VID=19H1" & set "CB=18362.356.190909-1636.19h1_release_svc_refresh" & set "CT=2019/09/" & set "CC=1.3"
-set "CAB=%\\%download.microsoft.com/download/4/e/4/4e491657-24c8-4b7d-a8c2-b7e4d28670db/products_20190912.cab"
-set "EXE=%\\%download.microsoft.com/download/9/8/8/9886d5ac-8d7c-4570-a3af-e887ce89cf65/MediaCreationTool1903.exe"
+set "CAB=https://download.microsoft.com/download/4/e/4/4e491657-24c8-4b7d-a8c2-b7e4d28670db/products_20190912.cab"
+set "EXE=https://download.microsoft.com/download/9/8/8/9886d5ac-8d7c-4570-a3af-e887ce89cf65/MediaCreationTool1903.exe"
 goto process ::# modern windows 10 starts here with proper memory allocation, cpu scheduling, security features
 
 :choice-7
 set "VER=17763" & set "VID=1809" & set "CB=17763.379.190312-0539.rs5_release_svc_refresh" & set "CT=2019/03/" & set "CC=1.3"
-set "CAB=%\\%download.microsoft.com/download/8/E/8/8E852CBF-0BCC-454E-BDF5-60443569617C/products_20190314.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/MediaCreationTool1809.exe"
+set "CAB=https://download.microsoft.com/download/8/E/8/8E852CBF-0BCC-454E-BDF5-60443569617C/products_20190314.cab"
+set "EXE=https://software-download.microsoft.com/download/pr/MediaCreationTool1809.exe"
 goto process ::# rather mediocre considering it is the base for ltsc 2019; less smooth than 1803 in games; intel pre-4th-gen buggy
 
 :choice-6
 set "VER=17134" & set "VID=1803" & set "CB=17134.112.180619-1212.rs4_release_svc_refresh" & set "CT=2018/07/" & set "CC=1.2"
-set "CAB=%\\%download.microsoft.com/download/5/C/B/5CB83D2A-2D7E-4129-9AFE-353F8459AA8B/products_20180705.cab"
-set "EXE=%\\%software-download.microsoft.com/download/pr/MediaCreationTool1803.exe"
+set "CAB=https://download.microsoft.com/download/5/C/B/5CB83D2A-2D7E-4129-9AFE-353F8459AA8B/products_20180705.cab"
+set "EXE=https://software-download.microsoft.com/download/pr/MediaCreationTool1803.exe"
 goto process ::# update available to finally fix most standby memory issues that were present since 1703; intel pre-4th-gen buggy
 
 :choice-5
 set "VER=16299" & set "VID=1709" & set "CB=16299.125.171213-1220.rs3_release_svc_refresh" & set "CT=2018/01/" & set "CC=1.1"
-set "CAB=%\\%download.microsoft.com/download/3/2/3/323D0F94-95D2-47DE-BB83-1D4AC3331190/products_20180105.cab"
-set "EXE=%\\%download.microsoft.com/download/A/B/E/ABEE70FE-7DE8-472A-8893-5F69947DE0B1/MediaCreationTool.exe"
-goto process ::# plagued by standby and other memory allocation bugs, fullscreen optimisation issues, worst windows 10 ver by far
+set "CAB=https://download.microsoft.com/download/3/2/3/323D0F94-95D2-47DE-BB83-1D4AC3331190/products_20180105.cab"
+set "EXE=https://download.microsoft.com/download/A/B/E/ABEE70FE-7DE8-472A-8893-5F69947DE0B1/MediaCreationTool.exe"
+goto process ::# plagued by standby and other memory allocation bugs, fullscreen optimization issues, worst windows 10 ver by far
 
 :choice-4
 set "VER=15063" & set "VID=1703" & set "CB=15063.0.170317-1834.rs2_release" & set "CT=2017/03/" & set "CC=1.0"
 if %INSERT_BUSINESS%0 gtr 1 set "CB=15063.0.170710-1358.rs2_release_svc_refresh" & set "CT=2017/07/"
-rem set "XML=%\\%download.microsoft.com/download/2/E/B/2EBE3F9E-46F6-4DB8-9C84-659F7CCEDED1/products20170727.xml"
+rem set "XML=https://download.microsoft.com/download/2/E/B/2EBE3F9E-46F6-4DB8-9C84-659F7CCEDED1/products20170727.xml"
 rem above refreshed xml often fails decrypting dual x86 + x64 - using rtm instead; the added enterprise + cloud are refreshed
-set "CAB=%\\%download.microsoft.com/download/9/5/4/954415FD-D9D7-4E1F-8161-41B3A4E03D5E/products_20170317.cab"
-set "EXE=%\\%download.microsoft.com/download/1/F/E/1FE453BE-89E0-4B6D-8FF8-35B8FA35EC3F/MediaCreationTool.exe"
+set "CAB=https://download.microsoft.com/download/9/5/4/954415FD-D9D7-4E1F-8161-41B3A4E03D5E/products_20170317.cab"
+set "EXE=https://download.microsoft.com/download/1/F/E/1FE453BE-89E0-4B6D-8FF8-35B8FA35EC3F/MediaCreationTool.exe"
 goto process ::# some gamers still find it the best despite unfixed memory allocation bugs and exposed cpu flaws; can select Cloud
 
 :choice-3
 set "VER=14393" & set "VID=1607" & set "CB=14393.0.161119-1705.rs1_refresh" & set "CT=2017/01/" & set "CC=1.0"
-set "CAB=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
-goto process ::# snappy and stable for legacy hardware
+set "CAB=https://wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products_20170116.cab"
+set "EXE=https://download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+goto process ::# snappy and stable for legacy hardware (but with excruciantly slow windows update process)
 
 :choice-2
 set "VER=10586" & set "VID=1511" & set "CB=10586.0.160426-1409.th2_refresh" & set "CT=2016/05/" & set "CC=1.0"
-set "XML=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products05242016.xml"
-set "EXE=%\\%download.microsoft.com/download/1/C/4/1C41BC6B-F8AB-403B-B04E-C96ED6047488/MediaCreationTool.exe"
+set "XML=https://wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products05242016.xml"
+set "EXE=https://download.microsoft.com/download/1/C/4/1C41BC6B-F8AB-403B-B04E-C96ED6047488/MediaCreationTool.exe"
 rem 1511 MCT exe works and can select Education - using 1607 one instead anyway for unified products.xml catalog 1.0 format
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+set "EXE=https://download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
 goto process ::# most would rather go with 1507 or 1607 instead, with little effort can apply latest ltsb updates on all editions
 
 :choice-1
 set "VER=10240" & set "VID=1507" & set "CB=10240.16393.150909-1450.th1_refresh" & set "CT=2015/09/" & set "CC=1.0"
-set "XML=%\\%wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products09232015_2.xml"
-set "EXE=%\\%download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationToolx64.exe"
-set "EXE32=%\\%download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationTool.exe"
+set "XML=https://wscont.apps.microsoft.com/winstore/OSUpgradeNotification/MediaCreationTool/prod/Products09232015_2.xml"
+set "EXE=https://download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationToolx64.exe"
+set "EXE32=https://download.microsoft.com/download/1/C/8/1C8BAF5C-9B7E-44FB-A90A-F58590B5DF7B/v2.0/MediaCreationTool.exe"
 if /i "%PROCESSOR_ARCHITECTURE%" equ "x86" if not defined PROCESSOR_ARCHITEW6432 set "EXE=%EXE32%"
 rem 1507 MCT exe works but cant select Education - using 1607 one instead anyway for unified products.xml catalog 1.0 format
-set "EXE=%\\%download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
-goto process ::# fastest for potato PCs
+set "EXE=https://download.microsoft.com/download/C/F/9/CF9862F9-3D22-4811-99E7-68CE3327DAE6/MediaCreationTool.exe"
+goto process ::# fastest for potato PCs (but with excruciantly slow windows update process)
 
-:choice-
+:choice- ;( something happened (broken environment/powershell?) and should cancel, but continue with defaults instead
+set MCT=%dv%& set PRE=%dP%& goto choice-%dV%
+
 :choice-0
-%<%:0c " CANCELED "%>% & timeout /t 3 >nul & EXIT/B
+%<%:0c " CANCELED "%>% & timeout /t 3 >nul & exit /b
 
-:start
-@title %~nx0& mode 120,30& color 1f& echo off& set "ROOT=%~dp0"& set "0=%~f0"& set "__COMPAT_LAYER=Installer"
+:latest unified console appearance under 7 - 11  
+@echo off& title MCT& set __COMPAT_LAYER=Installer& chcp 437 >nul& set set=& for %%s in (%*) do if /i %%s equ set set set=1 
+if not defined set set /a BackClr=0x1 & set /a TextClr=0xf & set /a Columns=32 & set /a Lines=120 & set /a Buff=9999
+if not defined set set /a SColors=BackClr*16+TextClr & set /a WSize=Columns*256*256+Lines & set /a BSize=Buff*256*256+Lines
+if not defined set for %%s in ("HKCU\Console\MCT") do (
+ reg add HKCU\Console /v ForceV2 /d 0x01 /t reg_dword /f & reg add %%s /v ScreenColors /d %SColors% /t reg_dword /f
+ reg add %%s /v ColorTable00 /d 0x000000 /t reg_dword /f & reg add %%s /v ColorTable08 /d 0x767676 /t reg_dword /f
+ reg add %%s /v ColorTable01 /d 0x9e5a00 /t reg_dword /f & reg add %%s /v ColorTable09 /d 0xff783b /t reg_dword /f
+ reg add %%s /v ColorTable02 /d 0x0ea113 /t reg_dword /f & reg add %%s /v ColorTable10 /d 0x0cc616 /t reg_dword /f
+ reg add %%s /v ColorTable03 /d 0xdd963a /t reg_dword /f & reg add %%s /v ColorTable11 /d 0xd6d661 /t reg_dword /f
+ reg add %%s /v ColorTable04 /d 0x1f0fc5 /t reg_dword /f & reg add %%s /v ColorTable12 /d 0x5648e7 /t reg_dword /f
+ reg add %%s /v ColorTable05 /d 0x981788 /t reg_dword /f & reg add %%s /v ColorTable13 /d 0x9e00b4 /t reg_dword /f
+ reg add %%s /v ColorTable06 /d 0x009cc1 /t reg_dword /f & reg add %%s /v ColorTable14 /d 0xa5f1f9 /t reg_dword /f
+ reg add %%s /v ColorTable07 /d 0xcccccc /t reg_dword /f & reg add %%s /v ColorTable15 /d 0xffffff /t reg_dword /f
+ reg add %%s /v QuickEdit      /d 0x0000 /t reg_dword /f & reg add %%s /v LineWrap /d 0 /t reg_dword /f
+ reg add %%s /v LineSelection  /d 0x0001 /t reg_dword /f & reg add %%s /v CtrlKeyShortcutsDisabled /d 0 /t reg_dword /f
+ reg add %%s /v WindowSize    /d %WSize% /t reg_dword /f & reg add %%s /v ScreenBufferSize /d %BSize% /t reg_dword /f
+ reg add %%s /v FontSize   /d 0x00100008 /t reg_dword /f & reg add %%s /v FaceName /d "Consolas" /t reg_sz /f ) >nul 2>nul 
+::# set path, fix name (x) and reload from current directory
+pushd "%~dp0"& set "S=%SystemRoot%"& set "nx0=%~nx0"& call set "nx0=%%nx0:)=]%%"& call set "nx0=%%nx0:(=[%%"
+set "PATH=%S%\Sysnative;%S%\Sysnative\windowspowershell\v1.0\;%S%\System32;%S%\System32\windowspowershell\v1.0\;%PATH%"
+set "ROOT=%CD%"& call set "dir=%%CD:%TEMP%=%%" &rem #:: fallback to C:\ESD if current directory is in TEMP (script run from zip)
+if "%dir%" neq "%CD%" for %%s in ("%SystemDrive%\ESD") do (mkdir %%s& attrib -R -S -H %%s& pushd %%s& set "ROOT=%%~s")>nul 2>nul
+(if "%~nx0" neq "%nx0%" copy /y "%~nx0" "%nx0%") & robocopy "%~dp0/" "%ROOT%/" "%nx0%" >nul
+if not defined set start "MCT" cmd /d/x/r call "%ROOT%\%nx0%" %* set& exit
 ::# self-echo top 1-20 lines of script
-<"%~f0" (set/p \=&for /l %%/ in (1,1,19) do set \=& set/p \=& call echo;%%\%%)
+(<"%~f0" (set /p _=&for /l %%s in (1,1,20) do set _=& set /p _=& call echo;%%_%%))
 ::# lean xp+ color macros by AveYo:  %<%:af " hello "%>>%  &  %<%:cf " w\"or\"ld "%>%   for single \ / " use .%|%\  .%|%/  \"%|%\"
-for /f "delims=:" %%\ in ('echo;prompt $h$s$h:^|cmd/d') do set "|=%%\" &set ">>=\..\c nul &set/p \=%%\%%\%%\%%\%%\%%\%%\<nul&popd"
-set "<=pushd "%public%"&2>nul findstr /c:\ /a" &set ">=%>>%&echo;" &set "|=%|:~0,1%" &set/p \=\<nul>"%public%\c"
-::# generate a latest_MCT_script.url file for manual update - could have made the script to update itself, but decided against it
-for %%s in (latest_MCT_script.url) do if not exist %%s (echo;[InternetShortcut]&echo;URL=git.io/MediaCreationTool.bat)>%%s
-::# baffling pastebin url filters..
-for %%s in (tp://) do set "\\=ht%%s"
+for /f "delims=:" %%s in ('echo;prompt $h$s$h:^|cmd /d') do set "|=%%s"&set ">>=\..\c nul&set /p s=%%s%%s%%s%%s%%s%%s%%s<nul&popd"
+set "<=pushd "%public%"&2>nul findstr /c:\ /a" &set ">=%>>%&echo;" &set "|=%|:~0,1%" &set /p s=\<nul>"%public%\c"
 ::# (un)define main variables
-for %%v in (NO_UPDATE NO_UNDO NO_OEM PRE AUTO CREATE ISO DEFAULT EDITION KEY ARCH LANGCODE VID MCT XML CAB EXE) do set "%%v="
-set OPTIONS=/Selfhost& set "ROOT=%ROOT:~0,-1%"& exit/b
+for %%s in (OPTIONS MCT XML CAB EXE VID PRE AUTO ISO EDITION KEY ARCH LANGCODE NO_UPDATE DEF AKEY) do set "%%s="
+for %%s in (latest_MCT.url) do if not exist %%s (echo;[InternetShortcut]&echo;URL=github.com/AveYo/MediaCreationTool.bat)>%%s
+goto Universal MCT
+::--------------------------------------------------------------------------------------------------------------------------------
 
 :process
-if %PRE%==1 (set "PRESET=Auto Setup"    & set AUTO=1& set ISO=&  set CREATE=)
-if %PRE%==2 (set "PRESET=Create ISO"    & set AUTO=&  set ISO=1& set CREATE=1)
-if %PRE%==3 (set "PRESET=Create USB"    & set AUTO=&  set ISO=&  set CREATE=)
-if %PRE%==4 (set "PRESET=Select in MCT" & set AUTO=&  set ISO=&  set CREATE=& set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
+if %PRE% equ 1 (set "PRESET=Auto Upgrade")
+if %PRE% equ 2 (set "PRESET=Make ISO")
+if %PRE% equ 3 (set "PRESET=Make USB")
+if %PRE% equ 4 (set "PRESET=Select"       & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
+if %PRE% equ 5 (set "PRESET=MCT Defaults" & set EDITION=& set LANGCODE=& set ARCH=& set KEY=)
+if %PRE% equ 5 (goto noelevate) else set set=%MCT%.%PRE%
 
-::# cleanup MCT workfolder
-mkdir "%ROOT%\MCT" >nul 2>nul & pushd "%ROOT%\MCT"
-del /f /q products.* PID.txt *.ps1 *.cmd *.bat >nul 2>nul & set/a latest=0 & if exist latest set/p latest=<latest
-echo,20210903>latest & if %latest% lss 20210903 del /f /q products*.* MediaCreationTool*.exe 2>nul
+::# self elevate if needed for the custom presets to monitor setup progress, passing arguments and last GUI choices
+fltmc>nul || (set _=start "MCT" cmd /d/x/r call "%~f0" %* %set%& powershell -nop -c start -verb runas cmd \"/d/x/r $env:_\"& exit)
+:noelevate 'MCT Defaults' does not need it, script just quits straightaway   
 
-::# pre-run test of the built-in :DIR2ISO lean and mean snippet to automate iso creation, or fallback to manual selection in MCT
-if defined CREATE (mkdir test\iso & copy /y "%~f0" test\iso\tmp.txt & call :DIR2ISO "test" "test.iso" "123") >nul 2>nul
-if defined CREATE for %%/ in (test.iso) do (rd/s/q test & del/f/q test.iso & if %%~z/0 lss 300000 set "CREATE=") >nul 2>nul
-set FREE=0& for /f %%s in ('powershell -nop -c "[Math]::Round((Get-PSDrive $pwd.Path[0]).Free/1073741824)"') do set "FREE=%%~s"
-if defined CREATE if %FREE% LSS 5 set CREATE=& %<%:1e "INFO: Run from a drive with 5GB+ free to create iso directly "%>% &echo;
-if defined ISO if not defined CREATE set/a PRE=3 & set "PRESET=Create USB"
+::# cleanup Downloads\MCT workfolder and stale mount files
+mkdir "%ROOT%\MCT" >nul 2>nul & attrib -R -S -H %ROOT% /D & pushd "%ROOT%\MCT"
+del /f /q products.* *.key EI.cfg PID.txt auto.cmd AutoUnattend.xml >nul 2>nul 
+set /a latest=0 & if exist latest set /p latest=<latest
+echo,20211207>latest & if %latest% lss 20211116 del /f /q products*.* MediaCreationTool*.exe >nul 2>nul
 
 ::# edition fallback to ones that MCT supports - after selection
 (set MEDIA_EDITION=%MEDIA_EDITION:Embedded=Enterprise%)
 (set MEDIA_EDITION=%MEDIA_EDITION:IoTEnterprise=Enterprise%)
 (set MEDIA_EDITION=%MEDIA_EDITION:EnterpriseS=Enterprise%)
-if defined CREATE (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalWorkstation=Enterprise%)
-if defined CREATE (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalEducation=Education%)
+rem if %PRE% geq 2 (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalWorkstation=Enterprise%)
+rem if %PRE% geq 2 (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalEducation=Education%)
 if %VER% leq 16299 (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalWorkstation=Enterprise%)
 if %VER% leq 16299 (set MEDIA_EDITION=%MEDIA_EDITION:ProfessionalEducation=Education%)
 if %VER% leq 10586 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 15063 if %INSERT_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Enterprise=Professional%)
 if %VER% leq 10586 if %UNHIDE_BUSINESS%0 lss 1 (set MEDIA_EDITION=%MEDIA_EDITION:Education=Professional%)
-if %VER% neq 15063 (set MEDIA_EDITION=%MEDIA_EDITION:Cloud=Professional%) 
-if not defined EDITION if "%MEDIA_EDITION%" neq "%OS_EDITION%" set "EDITION=%MEDIA_EDITION%"
+if %VER% neq 15063 (set MEDIA_EDITION=%MEDIA_EDITION:Cloud=Professional%)
+if "%MEDIA_EDITION%" neq "%OS_EDITION%" set "REG_EDITION=%MEDIA_EDITION%"
+if defined EDITION (set EDITION=%MEDIA_EDITION%)  
 
 ::# generic key preset - only for staged editions in MCT install.esd - see sources\product.ini
-for %%/ in (%MEDIA_EDITION%) do for %%K in (
+for %%s in (%MEDIA_EDITION%) do for %%K in (
   V3WVW-N2PV2-CGWC3-34QGF-VMJ2C.Cloud                     NH9J3-68WK7-6FB93-4K3DF-DJ4F6.CloudN 
   YTMG3-N6DKC-DKB77-7M9GH-8HVX7.Core                      4CPRK-NM3K3-X6XXQ-RXX86-WXCHW.CoreN
   BT79Q-G7N6G-PGBYW-4YWX6-6F4BT.CoreSingleLanguage        N2434-X9D7W-8PF6X-8DV9T-8TYMD.CoreCountrySpecific
@@ -300,47 +323,43 @@ for %%/ in (%MEDIA_EDITION%) do for %%K in (
   DXG7C-N36C4-C4HTG-X4T3X-2YV77.ProfessionalWorkstation   WYPNQ-8C467-V2W6J-TX4WX-WT2RQ.ProfessionalWorkstationN
   YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY.Education                 84NGF-MHBT6-FXBX8-QWJK7-DRR8H.EducationN
   NPPR9-FWDCX-D2C8J-H872K-2YT43.Enterprise                DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4.EnterpriseN
-) do if /i %%~xK equ .%%/ set MEDIA_EDITION=%%~xK& call set MEDIA_EDITION=%%MEDIA_EDITION:.=%%& set "MEDIA_KEY=%%~nK"
+) do if /i %%~xK equ .%%s set MEDIA_EDITION=%%~xK& call set MEDIA_EDITION=%%MEDIA_EDITION:.=%%& set "MEDIA_KEY=%%~nK"
 
 ::# detected / selected media preset
-set MEDIA=& for %%s in (%EDITION%%LANGCODE%%ARCH%%KEY%) do (set MEDIA=%%s)
-if defined MEDIA for %%s in (%MEDIA_EDITION%) do (set EDITION=%%s)
+set "CONSUMER=%MEDIA_EDITION:Enterprise=%"
+if "%CONSUMER%" equ "%MEDIA_EDITION%" (set CFG=Consumer) else (set CFG=Business)
+if not defined EDITION (set UNSTAGED=1& set STAGED=) else (set UNSTAGED=& set STAGED=%MEDIA_EDITION%)
+if defined STAGED (set MEDIA_CFG=%STAGED%) else (set MEDIA_CFG=%CFG%)  
+set MEDIA=& for %%s in (%LANGCODE%%EDITION%%ARCH%%KEY%) do (set MEDIA=%%s)
 if defined MEDIA for %%s in (%MEDIA_LANGCODE%) do (set LANGCODE=%%s)
+if defined MEDIA for %%s in (%MEDIA_EDITION%) do (set EDITION=%%s)
 if defined MEDIA for %%s in (%MEDIA_ARCH%) do (set ARCH=%%s)
-if defined MEDIA for %%s in (%MEDIA_KEY%) do (if not defined KEY set KEY=%MEDIA_KEY%)
+if defined MEDIA for %%s in (%MEDIA_KEY%) do (if not defined KEY set KEY=%%s)
 ::# windows 11 not available on x86
 if %VER% geq 22000 (set MEDIA_ARCH=x64& if defined ARCH set ARCH=x64)
 
 ::# windows 11 vs 10 label quirks - guess I should not have combined them, but then again, 11 is 10 with a ui downgrade ;)
-if %VER% geq 22000 (set XI=11& set VIS=21H2) else (set XI=10& set VIS=%VID%)
+if %VER% geq 22000 (set X=11& set VIS=21H2) else (set X=10& set VIS=%VID%)
 
 ::# refresh screen
-cls & <"%~f0" (set/p \=&for /l %%/ in (1,1,19) do set \=& set/p \=& call echo;%%\%%)
+cls & <"%~f0" (set /p _=&for /l %%s in (1,1,20) do set _=& set/p _=& call echo;%%_%%)
 
-::# write target media label
-%<%:f0 " Windows %XI% Version "%>>%  &  %<%:2f " %VIS% "%>>%  &  %<%:f1 " %CB% "%>>%
-%<%:8f " %MEDIA_LANGCODE% "%>>%  &  %<%:3f " %MEDIA_EDITION% "%>>%  &  %<%:5f " %MEDIA_ARCH% "%>>%
-%<%:11 ~%>% & echo;
+::# write target media label with lang / edition / arch only for first 3 presets
+%<%:f0 " Windows %X% Version "%>>% & %<%:5f " %VIS% "%>>%  &  %<%:f1 " %CB% "%>>%
+if %PRE% leq 3 %<%:6f " %MEDIA_LANGCODE% "%>>%  &  %<%:9f " %MEDIA_CFG% "%>>%  &  %<%:2f " %MEDIA_ARCH% "%>%
+echo;
 
-::# download MCT and CAB / XML
-set "DL=function dl($u,$f) {$w=new-object Net.WebClient; $w.Headers.Add('user-agent','iPad'); try {$w.DownloadFile($u,$f)}"
-set "DL=%DL% catch [Net.WebException] {write-host -non ';('; del $f -force -ea 0} finally {$w.Dispose()} } ; dl"
-set "/h=Check urls in browser | del MCT dir | use powershell v3.0+ | unblock powershell | enable BITS serv"
-if defined EXE echo;%EXE%
-if not exist MediaCreationTool%VID%.exe powershell -nop -c "%DL% $env:EXE MediaCreationTool${env:VID}.exe" 2>nul
-if not exist MediaCreationTool%VID%.exe %<%:1e " MediaCreationTool%VID%.exe download failed "%>%
-if defined XML echo;%XML%
-if defined XML if not exist products%VID%.xml powershell -nop -c "%DL% $env:XML products${env:VID}.xml" 2>nul
-if defined XML if not exist products%VID%.xml %<%:1e " products%VID%.xml download failed "%>%
-if defined XML if exist products%VID%.xml copy /y products%VID%.xml products.xml >nul 2>nul
-if defined CAB echo;%CAB%
-if defined CAB if not exist products%VID%.cab powershell -nop -c "%DL% $env:CAB products${env:VID}.cab" 2>nul
-if defined CAB if not exist products%VID%.cab %<%:1e " products%VID%.cab download failed "%>%
-if exist products%VID%.cab del /f /q products%VID%.xml 2>nul
+::# download MCT and CAB / XML - new snippet to try via bits, net, certutil, and insecure/secure
+if defined EXE echo;%EXE% & call :DOWNLOAD "%EXE%" MediaCreationTool%VID%.exe
+if defined XML echo;%XML% & call :DOWNLOAD "%XML%" products%VID%.xml
+if defined CAB echo;%CAB% & call :DOWNLOAD "%CAB%" products%VID%.cab
+if exist products%VID%.xml copy /y products%VID%.xml products.xml >nul 2>nul
+if exist products%VID%.cab del /f /q products%VID%.xml >nul 2>nul
 if exist products%VID%.cab expand.exe -R products%VID%.cab -F:* . >nul 2>nul
-echo; & set "err=" & for %%s in (products.xml MediaCreationTool%VID%.exe) do if not exist %%s set err=1
-if defined err (%<%:4f " ERROR "%>>% & %<%:0f " %/h% "%>%) else if not defined err %<%:0f " %PRESET% "%>% ...
-if defined err del /f /q products%VID%.* MediaCreationTool%VID%.exe 2>nul & pause & EXIT/B
+set "/hint=Check urls in browser | del MCT dir | use powershell v3.0+ | unblock powershell | enable BITS serv"
+echo;& set err=& for %%s in (products.xml MediaCreationTool%VID%.exe) do if not exist %%s set err=1
+if defined err (%<%:4f " ERROR "%>>% & %<%:0f " %/hint% "%>%) else if not defined err %<%:0f " %PRESET% "%>%
+if defined err (del /f /q products%VID%.* MediaCreationTool%VID%.exe 2>nul & pause & exit /b1)
 
 ::# configure products.xml in one go via powershell snippet - most of the MCT fixes happen there
 call :PRODUCTS_XML
@@ -348,354 +367,491 @@ call :PRODUCTS_XML
 ::# repack XML into CAB
 makecab products.xml products.cab >nul
 
-::# pause couple seconds before launching MCT directly / via powershell runas
-::timeout /t 2 >nul
-
-::# blue pill: MCT authors untouched media with no preset options or oem files, script quits straightway
+::#  MCT authors untouched media with no preset options or added files, script quits straightway
 ::# ====================================================================================================
-if "Select in MCT" equ "%PRESET%" (start MediaCreationTool%VID%.exe /Selfhost& EXIT/B)
+if "MCT Defaults" equ "%PRESET%" (start MediaCreationTool%VID%.exe /Selfhost& exit /b)
 
-::# red pill: OR run custom preset for auto upgrade without prompts / create iso directly / create usb
+::#  OR run script-assisted presets for auto upgrade without prompts / create iso directly / create usb
 ::# ====================================================================================================
-if "Create USB" equ "%PRESET%" (set ACTION=/Action CreateMedia) else (set ACTION=/Action CreateUpgradeMedia)
-if %PRE%==3 (set "DIR=%SystemDrive%\$Windows.~WS\Sources\Windows") else (set "DIR=%SystemDrive%\ESD\Windows")
-if %PRE%==3 if not defined MEDIA (set MEDIA=Y& set EDITION=%MEDIA_EDITION%& set LANGCODE=%MEDIA_LANGCODE%& set ARCH=%MEDIA_ARCH%)
+if not defined MEDIA (set LANGCODE=%MEDIA_LANGCODE%& set EDITION=%MEDIA_EDITION%& set ARCH=%MEDIA_ARCH%)
+if defined UNSTAGED (set KEY=) else if defined KEY set AKEY=/Pkey %KEY%
 
-::# not using /MediaEdition setup option in MCT version 1703 and older - handled via CurrentVersion registry workaround
-for %%s in (%EDITION%)  do if %VER% gtr 15063 (set ACTION=%ACTION% /MediaEdition %%s)
-for %%s in (%LANGCODE%) do if %VER% gtr 15063 (set ACTION=%ACTION% /MediaLangCode %%s)
-for %%s in (%ARCH%)     do if %VER% gtr 15063 (set ACTION=%ACTION% /MediaArch %%s)
-::# other quirks
-if %VER% gtr 15063 if not defined NO_UPDATE set UPDATE=%UPDATE% /UpdateMedia Decline
-set ACTION=%ACTION% /Pkey Defer& set OPTIONS=%OPTIONS% %UPDATE% %UNDO% /SkipSummary /Eula Accept
+::# not using /MediaEdition option in MCT version 1703 and older - handled via CurrentVersion registry workaround
+if %VER% gtr 15063 (set MEDIA_SEL=/MediaLangCode %LANGCODE% /MediaEdition %EDITION% /MediaArch %ARCH%) else (set MEDIA_SEL=)
+if "Select" equ "%PRESET%" (set MEDIA_SEL=)
+
+::# separate options for MCT and auto.cmd
+set MOPTIONS=/Action CreateMedia %MEDIA_SEL% /Pkey Defer %OPTIONS% /SkipSummary /Eula Accept
+set AOPTIONS=/Auto Upgrade /MigChoice Upgrade %AKEY% %OPTIONS% /SkipSummary /Eula Accept
+set MAKE_OPTIONS=/SelfHost& for %%s in (%MOPTIONS%) do call set MAKE_OPTIONS=%%MAKE_OPTIONS%% %%s 
+set AUTO_OPTIONS=/SelfHost& for %%s in (%AOPTIONS%) do call set AUTO_OPTIONS=%%AUTO_OPTIONS%% %%s
 
 ::# generate PID.txt to preset EDITION on boot media - MCT install.esd indexes only, ProWS/ProEdu only via auto.cmd
-if defined KEY set AUTO_KEY=/Pkey %KEY%
-for %%/ in (Workstation WorkstationN Education EducationN) do if "Professional%%/" equ "%EDITION%" set "KEY="
+for %%s in (Workstation WorkstationN Education EducationN) do if "Professional%%s" equ "%EDITION%" set "KEY="
 if not defined PKEY if "Enterprise" equ "%EDITION%" set "KEY=" &rem explicitly remove generic PID.txt for Enterprise
 if not defined KEY (del /f /q PID.txt 2>nul) else (echo;[PID]& echo;Value=%KEY%& echo;;Edition=%EDITION%)>PID.txt
 
-::# generate auxiliary script files
-for %%/ in (custom_preset_ps1 auto_cmd Skip_TPM_Check_on_Media_Boot_cmd Skip_TPM_Check_on_Dynamic_Update_cmd) do (
-  powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_%%/')[1];"
-)
+::# generate EI.cfg for skipping key entry for generic 11 media
+if not defined KEY if %VER% geq 22000 (echo;[Channel]& echo;_Default)>EI.cfg    
 
-::# process via custom_preset.ps1 (as admin, to monitor setup state and take necessary action)
-set "p=%ROOT:'=''%\MCT\custom_preset.ps1"& set w=& if "Create ISO" equ "%PRESET%" set w=-wait
-powershell -win %hide% -nop -c start -verb runas %w% powershell \""-win %hide% -nop -c iex([io.file]::ReadAllText('%p%'))\"" 2>nul
+::# generate auto.cmd for upgrading without prompts - also copied to media so it can be re-run on demand 
+set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_auto_cmd')[1];"
 
-::# run Create ISO via :DIR2ISO lean and mean snippet after MCT has finished CreateUpgradeMedia in C:ESD\Windows
-if "Create ISO" equ "%PRESET%" (dir /b %SystemDrive%\ESD\Windows\sources\install.esd >nul 2>nul || EXIT/B) else EXIT/B
-powershell -win 0 -nop -c ";"
-set "LABEL=%XI% %VIS%" & for %%s in (%EDITION% %LANGCODE% %ARCH%) do call set "LABEL=%%LABEL%% %%s"
-call :DIR2ISO "%SystemDrive%\ESD\Windows" "%ROOT%\%LABEL%.iso" "%CB%"
-if not errorlevel 1 rd /s/q "%SystemDrive%\ESD\Windows" 2>nul
-timeout /t 5 >nul
+::# generate AutoUnattend.xml for enabling offline local account on 11 Home editions
+::# gets placed inside boot.wim so that it does not affect setup under windows  
+set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]generate_AutoUnattend_xml')[1];"
 
-::###############
-EXIT/B ALL DONE
-::###############
+::# start script-assisted MCT via powershell (to monitor setup state and take necessary action)
+set "0=%~f0"& start "MCT" /wait /b powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'[:]Assisted_MCT')[1];"
 
-:generate_custom_preset_ps1 $text = @"
- `$PRESET = '$env:PRESET'; `$OPTIONS = '$env:ACTION $($env:OPTIONS-replace"'","''")'
- `$VER = $env:VER; `$EDITION = '$env:EDITION'; `$OS_EDITION = '$env:OS_EDITION'; `$OS_PRODUCT = '$env:OS_PRODUCT'
- `$VID = '$env:VID'; `$XI = '$env:XI'; `$11 = `$XI -eq '11'; `$AUTO = '$env:AUTO' -ne ''; `$OEM = '$env:NO_OEM' -eq ''
- `$host.ui.rawui.windowtitle = `$PRESET; `$ROOT = '$($env:ROOT-replace"'","''")'; `$hide = '$env:hide'; `r`n
-"@ <# first export relevant environment #> + <# then the main script that will run elevated #> @'
- cd -Lit($ROOT+'\MCT'); $DRIVE = [environment]::SystemDirectory[0]; $WIM = $DRIVE + ':\$WINDOWS.~WS'; $ESD = $DRIVE + ':\ESD'
- if ('Create USB' -eq $PRESET) { $DIR = $WIM + '\Sources\Windows' } else { $DIR = $ESD + '\Windows' } ; $env:DIR = $DIR
- cmd "/d/x/c rmdir /s/q $DIR >nul 2>nul"
+::--------------------------------------------------------------------------------------------------------------------------------
+EXIT /BATCH DONE
+::--------------------------------------------------------------------------------------------------------------------------------
+
+:Assisted_MCT
+#:: unreliable processing like pausing setuphost removed; enhanced output 
+ $host.ui.rawui.windowtitle = "MCT $env:PRESET"; $ErrorActionPreference = 0
+ $DRIVE = [environment]::SystemDirectory[0]; $WD = $DRIVE+':\ESD'; $WS = $DRIVE+':\$WINDOWS.~WS\Sources'; $DIR = $WS+'\Windows' 
+ $ESD = $null; $USB = $null; $ISO = "$env:ROOT\$env:X $env:VIS $env:MEDIA_CFG $env:MEDIA_ARCH $env:MEDIA_LANGCODE.iso" 
+ if ('Auto Upgrade' -eq $env:PRESET) {$ISO = [io.path]::GetTempPath() + "~temporary.iso"}
+ del $ISO -force -ea 0 >''; if (test-path $ISO) {write-host ";( $ISO read-only or in use!`n" -fore 0xc; sleep 5; return}
+ cd -Lit("$env:ROOT\MCT")
+
 #:: workaround for version 1703 and earlier not having media selection switches
- $CV = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'
- if ($VER -le 15063 -and $EDITION -ne '') {
-   $null = reg add $CV /v EditionID /d $EDITION /f /reg:32; $null = reg delete $CV /v ProductName /f /reg:32
-   $null = reg add $CV /v EditionID /d $EDITION /f /reg:64; $null = reg delete $CV /v ProductName /f /reg:64
+ if ($env:VER -le 15063 -and $null -ne $env:REG_EDITION) {
+   $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'; $E = $env:REG_EDITION
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:32 /f & reg delete $K /v ProductName /reg:32 /f) >nul 2>nul"
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:64 /f & reg delete $K /v ProductName /reg:64 /f) >nul 2>nul"
  }
- function MCTCompatUndo { if ($VER -le 15063 -and $EDITION -ne '') {
-   $null = reg add $CV /v EditionID /d $OS_EDITION /f /reg:32; $null = reg add $CV /v ProductName /d $OS_PRODUCT /f /reg:32
-   $null = reg add $CV /v EditionID /d $OS_EDITION /f /reg:64; $null = reg add $CV /v ProductName /d $OS_PRODUCT /f /reg:64
- }}
-#:: setup file watcher to minimally track progress internally
+
+#:: setup file watcher to minimally track progress
  function Watcher {
-   $A = $args; $null = mkdir $A[1] -force -ea 0; $path = (gi -force -lit $A[1] -ea 0).FullName; $ret = $true
-   $W = new-object IO.FileSystemWatcher; $W.Path = $path; $W.Filter = $A[2]
-   $W.IncludeSubdirectories = $true; $W.NotifyFilter = 125; $W.EnableRaisingEvents = $true
+   $A = $args; $Exe = $A[0]; $File = $A[1]; $Dir = $A[2]; $Subdirs = @($false,$true)[$A[3] -eq 'all'] 
+   $P = mkdir $Dir -force -ea 0; if (!(test-path $P)) {return 1}; $W = new-object IO.FileSystemWatcher; $W.Path = $P.FullName
+   $W.Filter = $File; $W.IncludeSubdirectories = $Subdirs; $W.NotifyFilter = 125; $W.EnableRaisingEvents = $true; $ret = 1
    while ($true) {
-     try { $found = $W.WaitForChanged(15, 15000) } catch { $null = mkdir $A[1] -ea 0; continue }
-     if ($found.TimedOut -eq $false) { $found | Out-Default; $ret = $false; break } else { if ($A[0].HasExited) {break} ; $A[2] }
+     try { $get = $W.WaitForChanged(15, 15000) } catch { mkdir $Dir -ea 0 >''; continue }
+     if (-not $get.TimedOut) { write-host -fore Gray $get.ChangeType,$get.Name; $ret = 0;break} else {if ($Exe.HasExited) {break}}
    } ; $W.Dispose(); return $ret
  }
-#:: OEM files
- function OEMFiles {
-   pushd -lit $ROOT
-   foreach ($P in "$DIR\x86\sources","$DIR\x64\sources","$DIR\sources") {
-     if (!$OEM -or !(test-path "$P\setupprep.exe")) {continue}
-     if (test-path '$OEM$') {xcopy /CYBERHIQ '$OEM$' $($P+'\$OEM$')}
-     if (test-path "MCT\PID.txt") {copy -path "MCT\PID.txt" -dest $P -force}
-     if (test-path "MCT\auto.cmd") {copy -path "MCT\auto.cmd" -dest $DIR -force}
+
+#:: load ui automation library
+ $an = 'UIAutomationClientsideProviders','UIAutomationClient','UIAutomationTypes','System.Windows.Forms','Microsoft.VisualBasic'
+ $ca = { [Windows.Automation.ClientSettings]::RegisterClientSideProviderAssembly($re[0].GetName()) }
+ $re = $an |% { [Reflection.Assembly]::LoadWithPartialName("'$_") } ; try { & $ca } catch { & $ca }
+ $cp = [Windows.Automation.AutomationElement]::ClassNameProperty
+ $bt = "Button","ComboBox","Edit" |% {new-object Windows.Automation.PropertyCondition($cp, $_)}
+ new-item -path function: -name "Enter" -value { $app = get-process "SetupHost" -ea 0; if ($null -ne $app)
+ { [Microsoft.VisualBasic.Interaction]::AppActivate($app.Id)} ; [Windows.Forms.SendKeys]::SendWait("{ENTER}") } >'' 
+ $id = 0; if ('Make USB' -ne $env:PRESET) {$id = 1}
+ $sw = "ShowWindowAsync"; $dm = [AppDomain]::CurrentDomain."DefineDynami`cAssembly"(1,1)."DefineDynami`cModule"(1)
+ $dt = $dm."Defin`eType"("AveYo",1179913,[ValueType]); $ptr = (get-process -pid $PID).MainWindowHandle.gettype() 
+ $dt."DefinePInvok`eMethod"($sw,"user`32",8214,1,[void],@($ptr,[int]),1,4) >''; $nt = $dt."Creat`eType"()
+ new-item -path function: -name "ShowWindow" -value {$nt."G`etMethod"($sw).invoke(0,@($args[0],$args[1]))} >''
+
+#:: start monitoring
+ :mct while ($true) {
+  #:: launch MCT with /Selfhost /Action CreateMedia options and wait for main window
+   $set = get-process SetupHost -ea 0; if ($set) {$set.Kill()}
+   $mct = start -passthru "MediaCreationTool${env:VID}.exe" $env:MAKE_OPTIONS; if ($null -eq $mct) {break} 
+   while ($null -eq (get-process SetupHost -ea 0)) {if ($mct.HasExited) {break :mct}; sleep -m 200 }
+   $set = get-process SetupHost -ea 0; if ($null -eq $set) {break}
+   while ($set.MainWindowHandle -eq 0) { if ($mct.HasExited) {break :mct}; $set.Refresh(); sleep -m 200 }
+
+  #:: using automation to click gui buttons directly due to UpgradeNow and CreateUpgradeMedia actions no longer working in 11 MCT
+   if ('Select' -ne $env:PRESET) { try {
+     $win = [Windows.Automation.AutomationElement]::FromHandle($set.MainWindowHandle); $nr = $win.FindAll(5, $bt[0]).Count 
+     if ($env:VER -le 15063) {while ($win.FindAll(5,$bt[1]).Count -lt 3) {if ($mct.HasExited) {break :mct}; sleep -m 200}; Enter}
+     while ($win.FindAll(5,$bt[0]).Count -le $nr) {if ($mct.HasExited) {break :mct}; sleep -m 200}; $all = $win.FindAll(5,$bt[0]) 
+     $all[$id].GetCurrentPattern([Windows.Automation.SelectionItemPattern]::Pattern).Select();$all[$all.Count-1].SetFocus(); Enter
+     if ('Make USB' -ne $env:PRESET) {
+       while ($win.FindAll(5,$bt[2]).Count -le 0) {if ($mct.HasExited) {break :mct};sleep -m 50}; $val = $win.FindAll(5,$bt[2])[0]
+       $val.GetCurrentPattern([Windows.Automation.ValuePattern]::Pattern).SetValue($ISO); $all = $win.FindAll(5, $bt[0])
+       ($all |? {$_.Current.AutomationId -eq 1}).SetFocus(); Enter # sendkeys Enter - due to unreliable InvokePattern click()
+     }
+   } catch {} }
+  
+  #:: if DEF parameter used, quit without adding $OEM$, pid.txt, auto.cmd (includes 11 Setup override) to media
+   if ($null -ne $env:DEF -and 'Auto Upgrade' -ne $env:PRESET) {break} 
+
+  #:: get target $ISO or $USB from setup state file
+   $ready = $false; $task = "PreDownload"; $action = "GetWebSetupUserInput"
+   while (-not $ready) { 
+     [xml]$xml = get-content "$WS\Panther\windlp.state.xml" 
+     foreach ($t in $xml.WINDLP.TASK) { if ($t.Name -eq $task) { foreach ($a in $t.ACTION) { if ($a.ActionName -eq $action) {
+       if ($null -ne $a.DownloadUrlX86) {$ESD = $a.DownloadUrlX86}
+       if ($null -ne $a.DownloadUrlX64) {$ESD = $a.DownloadUrlX64}
+       if ($null -ne $a.TargetISO) {$ISO = $a.TargetISO; $ready = $true}
+       $u = $a.TargetUsbDrive; if ($null -ne $u -and $u -gt 0) {$USB = [char][Convert]::ToInt32($u, 16) + ":"; $ready = $true}
+     }}}} ; if ($mct.HasExited) {break :mct}; sleep -m 1000
+   }                                         
+   if ('Auto Upgrade' -ne $env:PRESET -and $null -eq $USB) {write-host -fore Gray "Prepare", $ISO}
+   if ('Auto Upgrade' -ne $env:PRESET -and $null -ne $USB) {write-host -fore Gray "Prepare", $USB}
+   if ('Auto Upgrade' -eq $env:PRESET) {write-host -fore Gray "Prepare", $DIR}
+   $label = "${env:X}_${env:VIS}" + ($ESD -split '(?=_client)')[1] 
+   write-host -fore Gray "FromESD", $label; sleep 10; powershell -win $env:hide -nop -c ";"
+
+  #:: watch setup files progress from the sideline (MCT has authoring control)
+   write-host -fore Yellow "Started ESD download"; Watcher $mct "*.esd"  $WD all >''; if ($mct.HasExited) {break}
+   write-host -fore Yellow "Started media create"; Watcher $mct "*.wim"  $WS all >''; if ($mct.HasExited) {break}
+   #write-host -fore Yellow "Started media layout"; Watcher $mct "ws.dat" $WS all >''; if ($mct.HasExited) {break}
+                            
+  #:: add to media $OEM$, EI.cfg, PID.txt, auto.cmd (includes 11 Setup override) - disable via DEF arg
+   pushd -lit "$env:ROOT"; foreach ($P in "$DIR\x86\sources","$DIR\x64\sources","$DIR\sources") {
+     if (($null -ne $env:DEF) -or !(test-path "$P\setupprep.exe")) {continue}
+     if ($ESD -like '*_vol_*') {del "MCT\EI.cfg" -force -ea 0 >''}
+     $f1 = '$OEM$'; if (test-path -lit $f1) {xcopy /CYBERHIQ $f1 "$P\$f1" >''; write-host -fore Gray AddFile $f1}
+     $f2 = "MCT\EI.cfg"; if (test-path $f2) {copy -path $f2 -dest $P -force >''; write-host -fore Gray AddFile $f2}
+     $f3 = "MCT\PID.txt"; if (test-path $f3) {copy -path $f3 -dest $P -force >''; write-host -fore Gray AddFile $f3}
+     $f4 = "MCT\auto.cmd"; if (test-path $f4) {copy -path $f4 -dest $DIR -force >''; write-host -fore Gray AddFile $f4}
+   } ; popd
+  
+  #:: done if not 11 or auto upgrade preset
+   if ($env:VER -lt 22000 -and 'Auto Upgrade' -ne $env:PRESET) {break :mct}
+   
+  #:: watch media layout progress
+   $ready = $false; $task = "MediaCreate"; $action = "IsoLayout"; if ($null -ne $USB) {$action = "UsbLayout"}
+   while (-not $ready) { 
+     [xml]$xml = get-content "$WS\Panther\windlp.state.xml"
+     foreach ($t in $xml.WINDLP.TASK) { if ($t.Name -eq $task) { foreach ($a in $t.ACTION) { if ($a.ActionName -eq $action) {
+       if ($null -ne $a.ProgressCurrent -and 0 -ne $a.ProgressCurrent) {$ready = $true}
+     }}}} ; if ($mct.HasExited) {break :mct}; sleep -m 10000
    }
-   popd
+   write-host -fore Yellow "Started", $action
+   $set = get-process SetupHost -ea 0; $global:handle = $set.MainWindowHandle; ShowWindow $handle 0
+   if (2 -eq $env:hide) {powershell -win 0 -nop -c ";"}
+
+  #:: watch usb layout progress if target is $USB
+   if ($null -ne $USB) {
+     $ready = $false; $task = "MediaCreate"; $action = "UsbLayout"
+     while (-not $ready) { 
+       [xml]$xml = get-content "$WS\Panther\windlp.state.xml"
+       foreach ($t in $xml.WINDLP.TASK) { if ($t.Name -eq $task) { foreach ($a in $t.ACTION) { if ($a.ActionName -eq $action) {
+         $total = $a.ProgressTotal; $current = $a.ProgressCurrent
+         if ($null -ne $total -and 0 -ne $total -and $total -eq $current) {$ready = $true} 
+       }}}} ; if ($mct.HasExited) {break :mct}; sleep -m 5000
+     }
+     write-host -fore Gray "Created", $action
+   }
+  
+  #:: done if not 11
+   if ($env:VER -lt 22000) {break :mct}
+
+  #:: kill MCT process before temporary iso is finalized   
+   $mct.Kill(); $set = get-process SetupHost -ea 0; if ($set) {$set.Kill()}
+   sleep 3; dism /cleanup-wim >''; del $ISO -force -ea 0 >'' 
+
+  #:: end monitoring 
+   break :mct
  }
-#:: Skip TPM Check on Dynamic Update v2 - also available as standalone toggle script in the MCT subfolder
- if ($11) {
-   $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"
-   $C+= '&md 11&cd 11&ren vd.exe vdsldr.exe&robocopy "../" "./" "vdsldr.exe"&ren vdsldr.exe vd.exe&start vd -Embedding)&rem;'
-   $K = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\vdsldr.exe'
-   $0 = ni $K -force -ea 0; sp $K Debugger $C -force
-   $0 = sp 'HKLM:\SYSTEM\Setup\MoSetup' 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
- }
-#:: MCT custom preset processing
- switch ($PRESET) {
-   'Auto Setup' {
-    #:: pasively wait MCT to author sources, then add $OEM$, PID.txt, auto.cmd (disable with NO_OEM) and launch auto.cmd setuprep
-     $MCT = start -wait "MediaCreationTool$VID.exe" $OPTIONS; if (-not (test-path $DIR)) {break}
-     OEMFiles; MCTCompatUndo; start -win $hide -wait cmd '/d/x/rcall auto.cmd %DIR%'
-     break
-   }
-   'Create ISO' {
-    #:: pasively wait MCT to author sources, then add $OEM$, PID.txt, auto.cmd (disable with NO_OEM) and Skip TPM check (if 11)
-     $MCT = start -wait "MediaCreationTool$VID.exe" $OPTIONS; if (-not (test-path $DIR)) {break}
-     OEMFiles; if ($11) {start -win $hide -wait cmd '/d/x/rcall Skip_TPM_Check_on_Media_Boot.cmd %DIR%'}
-     break
-   }
-   'Create USB' {
-   #:: just pass options and quit straightway if NO_OEM parameter used to skip adding $OEM$, pid.txt, auto.cmd to media
-     if (-not $OEM) { $MCT = start "MediaCreationTool$VID.exe" $OPTIONS; break }
-   #:: otherwise watch setup files from the sideline (MCT has authoring control from start to finish, locking file handles)
-     $MCT = start -passthru "MediaCreationTool$VID.exe" $OPTIONS; if ($null -eq $MCT) {break} ; sleep 7
-     Watcher $MCT $ESD "*.esd"; if ($MCT.HasExited) {break}; Watcher $MCT $WIM "*.wim"; if ($MCT.HasExited) {break}
-   #:: then add $OEM$, PID.txt, auto.cmd (disable with NO_OEM)
-     OEMFiles; if (-not $11) {break} ; Watcher $MCT $WIM "ws.dat"; if ($MCT.HasExited) {break}
-   #:: if 11, suspend setuphost after boot.wim creation to apply Skip TPM Check on Media Boot
-     $M=[AppDomain]::CurrentDomain."DefineDynami`cAssembly"(1,1)."DefineDynami`cModule"(1)
-     $D=$M."Defin`eType"("A",1179913,[ValueType]); $n="DebugActiveProcess","DebugActiveProcessStop",[int],[int];
-     0..1|% {$null=$D."DefinePInvok`eMethod"($n[$_],"kernel`32",8214,1,[int],$n[$_+2],1,4)}
-     $T=$D."Creat`eType"(); function DP {$T."G`etMethod"($args[0]).invoke(0,$args[1])}
-     $s=ps "SetupHost" -ea 0; if ($null -ne $s) {DP DebugActiveProcess $s.Id; sleep -m 300}
-     $s=ps "SetupHost" -ea 0; if ($null -ne $s) {DP DebugActiveProcess $s.Id; sleep -m 600}
-   #:: mount boot.wim and generate registry overrides via winpeshl.ini file (cleaner than altering system hive directly)
-     if ($null -ne $s) {start -win $hide -wait cmd '/d/x/rcall Skip_TPM_Check_on_Media_Boot.cmd %DIR%'}
-   #:: and finally, resume setuphost
-     $s=ps "SetupHost" -ea 0; if ($null -ne $s) {DP DebugActiveProcessStop $s.Id; sleep -m 300}
-     $s=ps "SetupHost" -ea 0; if ($null -ne $s) {DP DebugActiveProcessStop $s.Id; sleep -m 300}
-   }
- }
+
 #:: undo workaround for version 1703 and earlier not having media selection switches
- MCTCompatUndo
-#,#
-'@; [io.file]::WriteAllText('custom_preset.ps1', $text)
-:generate_custom_preset_ps1
-::------------------------------------------------------------------------------------------------------------------------------::
+ if ($env:VER -le 15063 -and $null -ne $env:REG_EDITION) {
+   $K = '"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"'; $E = $env:OS_EDITION; $P = $env:OS_PRODUCT
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:32 /f & reg add $K /v ProductName /d $P /reg:32 /f) >nul 2>nul"
+   start -nonew cmd "/d/x/r (reg add $K /v EditionID /d $E /reg:64 /f & reg add $K /v ProductName /d $P /reg:64 /f) >nul 2>nul"
+ }
+
+#:: Auto Upgrade preset starts auto.cmd from $DIR = C:\$WINDOWS.~WS\Sources\Windows 
+ if ('Auto Upgrade' -eq $env:PRESET) {
+   cd -Lit("$env:ROOT\MCT"); start -nonew cmd "/d/x/r call auto.cmd $DIR"
+   write-host "`r`n UPGRADING ... `r`n"; sleep 7; return
+ } 
+
+#:: skip windows 11 upgrade checks - for running setup from boot media
+ if ($env:VER -ge 22000 -and (test-path "$DIR\sources\boot.wim")) {
+   write-host -fore Yellow "Disable boot.wim 11 setup checks"
+   rmdir "$WD\MOUNT" -re -force -ea 0; mkdir "$WD\MOUNT" -force -ea 0 >''; $winsetup = "$WD\MOUNT\sources\winsetup.dll"
+   dism.exe /mount-wim /wimfile:"$DIR\sources\boot.wim" /index:2 /mountdir:"$WD\MOUNT"; write-host 
+   try {takeown.exe /f $winsetup /a >''; icacls.exe $winsetup /grant *S-1-5-32-544:f; attrib -R -S $winsetup; $patch = '/commit'
+     [io.file]::OpenWrite($winsetup).close()} catch {$patch = '/discard'}
+   if ($patch -eq '/commit') { #:: an original setup override by AveYo to use when registry overrides fail (VirtualBox 5.x)
+     $b = [io.file]::ReadAllBytes($winsetup); $h = [BitConverter]::ToString($b)-replace'-' 
+     $s = [BitConverter]::ToString([Text.Encoding]::Unicode.GetBytes('Module_Init_HWRequirements'))-replace'-'
+     $i = ($h.IndexOf($s)/2); $r = [Text.Encoding]::Unicode.GetBytes('Module_Init_GatherDiskInfo'); $l = $r.Length
+     if ($i -gt 1) {for ($k=0;$k -lt $l;$k++) {$b[$i+$k] = $r[$k]}; [io.file]::WriteAllBytes($winsetup,$b)}; [GC]::Collect()
+   }  
+   $f5 = "$env:ROOT\MCT\AutoUnattend.xml"; if (test-path $f5) {copy -path $f5 -dest "$WD\MOUNT" -force >''}   
+   dism.exe /unmount-wim /mountdir:"$WD\MOUNT" $patch; rmdir "$WD\MOUNT" -re -force -ea 0; write-host
+   if ($null -ne $USB) {
+     write-host -fore Yellow "MakeUSB $USB"
+     #:: if target is $USB, refresh boot.wim from sources
+     replace "$DIR\sources\boot.wim" "$USB\sources" /r /u
+   } else {
+     write-host -fore Yellow "MakeISO"
+     #:: if target is $ISO, load snippet then call DIR2ISO DIR ISO LABEL
+     iex ([io.file]::ReadAllText($env:0)-split '#\:DIR2ISO\:' ,3)[1]
+     DIR2ISO $DIR $ISO $label
+   }
+  #:: cleanup 
+   pushd -lit "$env:ROOT"; start -wait "$DIR\sources\setupprep.exe" "/cleanup"
+   start -nonew cmd "/d/x/c rmdir /s /q ""$DIR"" & del /f /q ""$WS\*.*""" >'' 
+ }
+
+ write-host "`r`nDONE`r`n"; sleep 7; return
+#:: done #:Assisted_MCT
+::--------------------------------------------------------------------------------------------------------------------------------
 
 :generate_auto_cmd $text = @"
-@title Auto Upgrade without prompts + change edition support & (set media=%1) & color 1f& echo off
-set OPTIONS=/MigChoice Upgrade /Auto Upgrade $env:OPTIONS $env:AUTO_KEY
-
+<!-- : Auto Upgrade without prompts + change edition support
+@title Auto Upgrade & set root=%1& set cfg=%2& echo off 
+set OPTIONS=$env:AUTO_OPTIONS`r`n`r`n
 "@ + @'
-if defined media (pushd %media%) else pushd "%~dp0"
+pushd "%~dp0"& if defined root pushd %root% 
 for %%i in ("x86\" "x64\" "") do if exist "%%~isources\setupprep.exe" set "dir=%%~i"
-pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit/b)
+pushd "%dir%sources" || (echo "%dir%sources" & timeout /t 5 & exit /b)
+setlocal EnableDelayedExpansion
 
-::# elevate so that workarounds can be set
-fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  &exit/b)
+::# start sources\setup if under winpe (when booted from media)
+reg query "HKLM\Software\Microsoft\Windows NT\CurrentVersion\WinPE">nul 2>nul && (start "WinPE" sources\setup.exe &exit /b)
 
-::# Skip TPM Check on Dynamic Update 11 snippet
-set skip_tpm_enabled=1 & call :skip_tpm_check_on_dynamic_update
+::# elevate so that workarounds can be set under windows
+fltmc>nul || (set _="%~f0" %*& powershell -nop -c start -verb runas cmd \"/d/x/r call $env:_\"& exit /b)
 
-::# current version query
-set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+::# get current version
+set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"                       
 for /f "tokens=2*" %%R in ('reg query %NT% /v EditionID /reg:64 2^>nul') do set "EditionID=%%S"
 for /f "tokens=2*" %%R in ('reg query %NT% /v ProductName /reg:64 2^>nul') do set "ProductName=%%S"
-for /f "tokens=2*" %%R in ('reg query %NT% /v CurrentBuildNumber /reg:64 2^>nul') do set "Build=%%S"
+for /f "tokens=2*" %%R in ('reg query %NT% /v CurrentBuildNumber /reg:64 2^>nul') do set "CurrentBuild=%%S"
+for /f "tokens=2-3 delims=[." %%i in ('ver') do for %%s in (%%i) do set /a Version=%%s*10+%%j
 
-::# media selection from PID.txt - get it verbosely in case auto.cmd is reused without MediaCreationTool.bat
-set Value=& set Edition=& if exist PID.txt for /f "delims=" %%v in (PID.txt) do (set %%v)2>nul
-if defined Value for %%K in (
-  Cloud.V3WVW-N2PV2-CGWC3-34QGF-VMJ2C                   CloudN.NH9J3-68WK7-6FB93-4K3DF-DJ4F6 
-  Core.YTMG3-N6DKC-DKB77-7M9GH-8HVX7                    CoreN.4CPRK-NM3K3-X6XXQ-RXX86-WXCHW
-  CoreSingleLanguage.BT79Q-G7N6G-PGBYW-4YWX6-6F4BT      CoreCountrySpecific.N2434-X9D7W-8PF6X-8DV9T-8TYMD
-  Professional.VK7JG-NPHTM-C97JM-9MPGT-3V66T            ProfessionalN.2B87N-8KFHP-DKV6R-Y2C8J-PKCKT
-  ProfessionalEducation.8PTT6-RNW4C-6V7J2-C2D3X-MHBPB   ProfessionalEducationN.GJTYN-HDMQY-FRR76-HVGC7-QPF8P
-  ProfessionalWorkstation.DXG7C-N36C4-C4HTG-X4T3X-2YV77 ProfessionalWorkstationN.WYPNQ-8C467-V2W6J-TX4WX-WT2RQ
-  Education.YNMGQ-8RYV3-4PGQ3-C8XTP-7CFBY               EducationN.84NGF-MHBT6-FXBX8-QWJK7-DRR8H
-  Enterprise.NPPR9-FWDCX-D2C8J-H872K-2YT43              EnterpriseN.DPH2V-TTNVB-4X9Q3-TJR4H-KHJW4
-) do if /i %%~xK equ .%Value% (set Edition=%%~nK)
-if defined Edition if /i "%Edition%" neq "%EditionID%" call :rename %Edition% & goto setup force edition if selected
+::# group editions by image
+set e10=CloudN & set e11=Cloud & set e12=CoreCountrySpecific & set e13=CoreSingleLanguage 
+set e14=StarterN HomeBasicN HomePremiumN CoreConnectedN CoreN 
+set e15=Starter  HomeBasic  HomePremium  CoreConnectedCountrySpecific CoreConnectedSingleLanguage CoreConnected Core
+set e16=UltimateN ProfessionalStudentN
+set e17=Ultimate  ProfessionalStudent  ProfessionalCountrySpecific ProfessionalSingleLanguage
+set e18=ProfessionalEducationN ProfessionalWorkstationN ProfessionalN
+set e19=ProfessionalEducation  ProfessionalWorkstation  Professional
+set e20=EducationN & set e21=Education & set e22=EnterpriseN & set e23=IoTEnterprise Enterprise
+set e24=EnterpriseGN EnterpriseSN & set e25=EnterpriseG  EnterpriseS  IoTEnterpriseS Embedded
+
+::# get available images via wim_info snippet
+for /l %%i in (10,1,25) do set _%%i=& for %%U in (!e%%i!) do (set _%%U=)
+set "0=%~f0"& set wim=& set ext=.esd& if exist install.wim (set ext=.wim) else if exist install.swm set ext=.swm
+set "wim_info=iex ([io.file]::ReadAllText($env:0)-split'#[:]wim_info')[1]; WIM_INFO install%ext%"  
+for /f "tokens=1-6 delims=," %%i in ('powershell -nop -c "%wim_info% 0"') do (
+  set _%%m=%%i& set _%%i=%%m& set b_%%i=%%j& set count=%%i& set wim=!wim! %%m
+  for /f "tokens=1 delims=." %%K in ("%%j") do (set Build%%i=%%K)
+)
+echo;Windows images:%wim%
+
+::# get preset edition in EI.cfg or PID.txt
+set Name=& set EI=& set "cfg_filter=EditionID Channel OEM Retail Volume _Default VL 0 1 ^$"
+if exist EI.cfg for /f "tokens=*" %%i in ('findstr /v /i /r "%cfg_filter%" EI.cfg') do set "EI=%%i"
+if exist PID.txt for /f "delims=;" %%i in (PID.txt) do set %%i 2>nul
+if exist product.ini for /f "tokens=1,2 delims==" %%s in (product.ini) do if not "%%P" equ "" (set pid_%%s=%%P& set %%P=%%s)
+if defined Value if not defined Name call set "Name=%%%Value%%%"
+set oID=%EditionID%& set nID=%EI%& if defined Name (set nID=%Name%)
+if not defined nID (if defined cfg (set nID=%cfg%) else set nID=%oID%)
+echo;Edition preset: %nID%
+
+::# get upgrade matrix
+set index=& set change=& set new=0
+for /l %%i in (10,1,25) do for %%U in (!e%%i!) do (
+  (if %nID% equ %%U set new=%%i) & (if %oID% equ %%U set old=%%i) & (if defined _%%U set _%%i=!_%%U!)
+)
+if %new% equ 10 set .= Cloud N     & for %%i in (22 12 13 14 20 18 10) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 11 set .= Cloud       & for %%i in (23 12 13 15 21 19 11) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 12 set .= HomeCountry & for %%i in (10 22 13 14 20 18 12) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 13 set .= HomeSingle  & for %%i in (10 22 13 14 20 18 13) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 14 set .= Home N      & for %%i in (10 12 13 22 20 18 14) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if %new% equ 15 set .= Home        & for %%i in (11 12 13 23 21 19 15) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if %new% equ 16 set .= Ultimate N  & for %%i in (10 12 13 14 20 18 16) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if %new% equ 17 set .= Ultimate    & for %%i in (11 12 13 15 21 19 17) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if %new% equ 18 set .= Pro N       & for %%i in (10 12 13 14 20 22 18) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 19 set .= Pro         & for %%i in (11 12 13 15 21 23 19) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 20 set .= Edu N       & for %%i in (10 12 13 14 22 18 20) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 21 set .= Edu         & for %%i in (11 12 13 15 23 19 21) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 22 set .= Ent N       & for %%i in (10 12 13 14 20 18 22) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 23 set .= Ent         & for %%i in (11 12 13 15 21 19 23) do if defined _%%i (set index=!_%%i!& set change=)
+if %new% equ 24 set .= other N     & for %%i in (10 12 13 14 20 18 22) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if %new% equ 25 set .= other       & for %%i in (11 12 13 15 21 19 23) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if not defined index for %%i in (15 19 21) do if defined _%%i (set index=!_%%i!& set change=%%i)
+if defined index set OPTIONS=%OPTIONS% /ImageIndex %index%  
+if defined change for %%i in (!e%change%!) do (set change=%%i)& rem if defined pid_%%i set OPTIONS=%OPTIONS% /pkey !pid_%%i! 
+echo;Edition change: %change%
+echo;Selected index: %index%
+
+::# prevent usage of MCT for intermediary upgrade in Dynamic Update (causing 7 to 19H1 instead of 7 to 21H2 for example) 
+if "%Build1%" gtr "15063" (set OPTIONS=%OPTIONS% /UpdateMedia Decline)
+
+::# skip windows 11 upgrade checks via launch option trick - this way, can still run setup.exe directly to not skip checks
+if "%Build1%" geq "22000" (set OPTIONS=/Product Server %OPTIONS%)
 
 ::# auto upgrade with edition lie workaround to keep files and apps - all 1904x builds allow up/downgrade between them
-if not exist ei.cfg (set vol=0) else (set vol=1)
-if /i "Embedded"            == "%EditionID%" if %vol% == 1 (call :rename Enterprise)  else (call :rename Professional)
-if /i "IoTEnterpriseS"      == "%EditionID%" if %vol% == 1 (call :rename Enterprise)  else (call :rename Professional)
-if /i "EnterpriseS"         == "%EditionID%" if %vol% == 1 (call :rename Enterprise)  else (call :rename Professional)
-if /i "EnterpriseSN"        == "%EditionID%" if %vol% == 1 (call :rename EnterpriseN) else (call :rename ProfessionalN)
-if /i "IoTEnterprise"       == "%EditionID%" if %vol% == 0 (call :rename Professional)
-if /i "Enterprise"          == "%EditionID%" if %vol% == 0 (call :rename Professional)
-if /i "EnterpriseN"         == "%EditionID%" if %vol% == 0 (call :rename ProfessionalN)
-if /i "CoreCountrySpecific" == "%EditionID%" if %vol% == 1 (call :rename Professional)
-if /i "CoreSingleLanguage"  == "%EditionID%" if %vol% == 1 (call :rename Professional)
-if /i "Core"                == "%EditionID%" if %vol% == 1 (call :rename Professional)
-if /i "CoreN"               == "%EditionID%" if %vol% == 1 (call :rename ProfessionalN)
-if /i ""                    == "%EditionID%" (call :rename Professional)
+if defined change call :rename %change%
 
-:setup
 start "auto" setupprep.exe %OPTIONS%
-exit/b
+timeout /t 7
+exit /b
 
 :rename EditionID
 set NT="HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
-(reg query  %NT% /v ProductName_undo /reg:32 || reg add %NT% /v ProductName_undo /d "%ProductName%" /f /reg:32
- reg query  %NT% /v ProductName_undo /reg:64 || reg add %NT% /v ProductName_undo /d "%ProductName%" /f /reg:64
- reg query  %NT% /v EditionID_undo   /reg:32 || reg add %NT% /v EditionID_undo   /d "%EditionID%"   /f /reg:32
- reg query  %NT% /v EditionID_undo   /reg:64 || reg add %NT% /v EditionID_undo   /d "%EditionID%"   /f /reg:64
- reg delete %NT% /v ProductName   /f /reg:32  & reg add %NT% /v EditionID /d "%~1" /f /reg:32
- reg delete %NT% /v ProductName   /f /reg:64  & reg add %NT% /v EditionID /d "%~1" /f /reg:64
-) >nul 2>nul &exit/b
+(reg query %NT% /v ProductName_undo      /reg:32 || reg add %NT% /v ProductName_undo /d "%ProductName%" /f /reg:32
+ reg query %NT% /v ProductName_undo      /reg:64 || reg add %NT% /v ProductName_undo /d "%ProductName%" /f /reg:64
+ reg query %NT% /v EditionID_undo        /reg:32 || reg add %NT% /v EditionID_undo   /d "%EditionID%"   /f /reg:32
+ reg query %NT% /v EditionID_undo        /reg:64 || reg add %NT% /v EditionID_undo   /d "%EditionID%"   /f /reg:64
+ reg add   %NT% /v EditionID /d "%~1" /f /reg:32 &  reg add %NT% /v ProductName      /d "%~1"           /f /reg:32
+ reg add   %NT% /v EditionID /d "%~1" /f /reg:64 &  reg add %NT% /v ProductName      /d "%~1"           /f /reg:64
+) >nul 2>nul &exit /b
 
-:skip_tpm_check_on_dynamic_update - also available as standalone toggle script in the MCT subfolder
-set "0=%~f0"& powershell -nop -c "iex ([io.file]::ReadAllText($env:0)-split'skip\:tpm.*')[1];" &exit/b skip:tpm
-  $S = gi -force 'setupprep.exe' -ea 0; if ($S.VersionInfo.FileBuildPart -lt 22000) {return} #:: abort if not 11 media
-  $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"
-  $C+= '&md 11&cd 11&ren vd.exe vdsldr.exe&robocopy "../" "./" "vdsldr.exe"&ren vdsldr.exe vd.exe&start vd -Embedding)&rem;'
-  $K = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\vdsldr.exe'
-  $0 = ni $K; sp $K Debugger $C -force
-  $0 = sp HKLM:\SYSTEM\Setup\MoSetup 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
-#,#
-'@; [io.file]::WriteAllText('auto.cmd', $text)
-:generate_auto_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+#:wim_info # 
+function WIM_INFO ($file = 'install.esd', $index = 0, $output = 0) { :info while ($true) {
+  #:: Quick ISO ESD WIM info by AveYo v1
+  #:: args = file, image index or 0 for all, output 0 for simple, 1 for xml text, 2 for xml object
+  #:: by default returns simple image index, version, arch, lang, edition - example: 6,19041.631,x64,en-US,Professional
+  $block = 2097152; $bytes = new-object "Byte[]" ($block); $begin = [uint64]0; $final = [uint64]0; $limit = [uint64]0
+  $steps = [int]([uint64]([IO.FileInfo]$file).Length / $block - 1); $encoding = [Text.Encoding]::GetEncoding(28591)
+  $find1 = $encoding.GetString([Text.Encoding]::Unicode.GetBytes("</INSTALLATIONTYPE>"))
+  $find2 = $encoding.GetString([Text.Encoding]::Unicode.GetBytes("</WIM>"))
+  $f = new-object IO.FileStream ($file, 3, 1, 1); $p = 0; $p = $f.Seek(0, 2)
+  for ($o = 1; $o -le $steps; $o++) { 
+    $p = $f.Seek(-$block, 1); $r = $f.Read($bytes, 0, $block); if ($r -ne $block) {write-host invalid block $r; break}
+    $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.LastIndexOf($find1, [StringComparison]::Ordinal) 
+    if ($t -ge 0) {
+      $f.Seek(($t -$block), 1) >''
+      for ($o = 1; $o -le $block; $o++) { $f.Seek(-2, 1) >''; if ($f.ReadByte() -eq 0xfe) {$begin = $f.Position; break} }
+      $limit = $f.Length - $begin; if ($limit -lt $block) {$x = $limit} else {$x = $block}
+      $bytes = new-object "Byte[]" ($x); $r = $f.Read($bytes, 0, $x); 
+      $u = [Text.Encoding]::GetEncoding(28591).GetString($bytes); $t = $u.IndexOf($find2, [StringComparison]::Ordinal)
+      if ($t -ge 0) {$f.Seek(($t + 12 -$x), 1) >''; $final = $f.Position} ; break
+    } else { $p = $f.Seek(-$block, 1)} 
+  }
+  if ($begin -gt 0 -and $final -gt $begin) {
+    $x = $final - $begin; $f.Seek(-$x, 1) >''; $bytes = new-object "Byte[]" ($x); $r = $f.Read($bytes, 0, $x)
+    if ($r -ne $x) {break}
+    [xml]$xml = [Text.Encoding]::Unicode.GetString($bytes); $f.Dispose()
+  } else {$f.Dispose()}
+  break :info } 
+  if ($output -eq 0) {$simple = ""; foreach ($i in $xml.WIM.IMAGE) { if ($index -gt 0 -and $($i.INDEX) -ne $index) {continue}
+    $simple += "$($i.INDEX),$($I.WINDOWS.VERSION.BUILD).$($I.WINDOWS.VERSION.SPBUILD),"
+    $simple += "$(('x64','x86')[$I.WINDOWS.ARCH-eq'0']),$($I.WINDOWS.LANGUAGES.LANGUAGE),$($I.WINDOWS.EDITIONID)`r`n"
+  } ; return $simple }
+  if ($output -eq 1) {[console]::OutputEncoding=[Text.Encoding]::UTF8; $xml.Save([Console]::Out); ""} 
+  if ($output -eq 2) {return $xml}
+}
+#:: done #:wim_info
 
-:generate_Skip_TPM_Check_on_Dynamic_Update_cmd $text = @'
-@(set "0=%~f0"^)#) & powershell -nop -c iex([io.file]::ReadAllText($env:0)) & exit/b
-#:: double-click to run or just copy-paste into powershell - it's a standalone hybrid script
-#:: v2 using ifeo instead of wmi - increased compatibility at the cost of showing a cmd briefly on diskmgmt 
+'@; [io.file]::WriteAllText('auto.cmd', $text) #:generate_auto_cmd
+::--------------------------------------------------------------------------------------------------------------------------------
 
-$_Paste_in_Powershell = {
-  $N = 'Skip TPM Check on Dynamic Update'
-  $B = gwmi -Class __FilterToConsumerBinding -Namespace 'root\subscription' -Filter "Filter = ""__eventfilter.name='$N'""" -ea 0
-  $C = gwmi -Class CommandLineEventConsumer -Namespace 'root\subscription' -Filter "Name='$N'" -ea 0
-  $F = gwmi -Class __EventFilter -NameSpace 'root\subscription' -Filter "Name='$N'" -ea 0
-  if ($B) { $B | rwmi } ; if ($C) { $C | rwmi } ; if ($F) { $F | rwmi }
-  $C = "cmd /q $N (c) AveYo, 2021 /d/x/r>nul (erase /f/s/q %systemdrive%\`$windows.~bt\appraiserres.dll"
-  $C+= '&md 11&cd 11&ren vd.exe vdsldr.exe&robocopy "../" "./" "vdsldr.exe"&ren vdsldr.exe vd.exe&start vd -Embedding)&rem;'
-  $K = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\vdsldr.exe'
-  if (test-path $K) {ri $K -force -ea 0; write-host -fore 0xf -back 0xd "`n $N [REMOVED] run again to install "; timeout /t 5}
-  else {$0=ni $K; sp $K Debugger $C -force; write-host -fore 0xf -back 0x2 "`n $N [INSTALLED] run again to remove ";timeout /t 5}
-  $0 = sp HKLM:\SYSTEM\Setup\MoSetup 'AllowUpgradesWithUnsupportedTPMOrCPU' 1 -type dword -force -ea 0
-} ; start -verb runas powershell -args "-nop -c & {`n`n$($_Paste_in_Powershell-replace'"','\"')}"
-$_Press_Enter
-#,#
-'@; [io.file]::WriteAllText('Skip_TPM_Check_on_Dynamic_Update.cmd', $text)
-:generate_Skip_TPM_Check_on_Dynamic_Update_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+:generate_AutoUnattend_xml $text = @'
+<unattend xmlns="urn:schemas-microsoft-com:unattend"><!-- offline local account on 11 Home editions and privacy opt-out -->  
+  <settings pass="windowsPE"><component name="Microsoft-Windows-Setup" processorArchitecture="amd64" language="neutral"
+    xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    publicKeyToken="31bf3856ad364e35" versionScope="nonSxS">
+  <UserData><ProductKey><Key>AAAAA-VVVVV-EEEEE-YYYYY-OOOOO</Key><WillShowUI>OnError</WillShowUI></ProductKey></UserData>
+  </component></settings>
+  <settings pass="oobeSystem"><component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" language="neutral" 
+    xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    publicKeyToken="31bf3856ad364e35" versionScope="nonSxS">
+  <OOBE><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideLocalAccountScreen>false</HideLocalAccountScreen>
+  <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>3</ProtectYourPC></OOBE></component></settings>
+</unattend>
 
-:generate_Skip_TPM_Check_on_Media_Boot_cmd $text = @'
-@title Skip TPM Check on Media Boot & color 1e & echo on & (set media=%1)
-::#  run from the root of the USB drive or ISO files to add reg overrides in sources\boot.wim via winpeshl.ini
-
-@pushd "%~dp0" & if defined media pushd %media% & if not exist sources\boot.wim popd
-@if not exist sources\boot.wim echo; SOURCES\BOOT.WIM NOT FOUND! & timeout /t 5 & exit/b
-@fltmc>nul || (set _="%~f0" %* & powershell -nop -c start -verb runas cmd \"/d/x/rcall $env:_\"  & exit/b)
-@dism /cleanup-wim & mkdir C:\ESD\AveYo>nul & set ini=C:\ESD\AveYo\Windows\System32\winpeshl.ini & (set By=By)
-@dism /mount-wim /wimfile:sources\boot.wim /index:2 /mountdir:C:\ESD\AveYo & (set DO=commit) & if exist %ini% (set DO=discard)
- >%ini% echo;[LaunchApps]
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passTPMCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passSecureBootCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passStorageCheck /d 1 /t reg_dword /f"
->>%ini% echo;cmd, "/c reg add HKLM\SYSTEM\Setup\LabConfig /v %By%passRAMCheck /d 1 /t reg_dword /f"
->>%ini% echo;%%SYSTEMDRIVE%%\setup.exe
-@dism /unmount-wim /mountdir:C:\ESD\AveYo /%DO% & rd /s /q C:\ESD\AveYo & del /f /q sources\appraiserres.dll>nul
-::,::
-'@; [io.file]::WriteAllText('Skip_TPM_Check_on_Media_Boot.cmd', $text)
-:generate_Skip_TPM_Check_on_Media_Boot_cmd
-::------------------------------------------------------------------------------------------------------------------------------::
+'@; [io.file]::WriteAllText('AutoUnattend.xml', $text); #:generate_AutoUnattend_xml
+::--------------------------------------------------------------------------------------------------------------------------------
 
 :reg_query [USAGE] call :reg_query "HKCU\Volatile Environment" Value variable
-(for /f "tokens=2*" %%R in ('reg query "%~1" /v "%~2" /se "," 2^>nul') do set "%~3=%%S")& exit/b
-::------------------------------------------------------------------------------------------------------------------------------::
+(for /f "tokens=2*" %%R in ('reg query "%~1" /v "%~2" /se "," 2^>nul') do set "%~3=%%S")& exit /b
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:DIR2ISO:#  [PARAMS] "directory" "file.iso" [optional]"label"
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:DIR2ISO\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
-set ^ #=& set "0=%~f0"& set 1=;%0 %*& powershell -nop -c "%#%"& exit/b %errorcode%
-function :DIR2ISO ($dir, $iso, $vol='DVD_ROM') {if (!(test-path -Path $dir -pathtype Container)) {"[ERR] $dir\";exit 1}; $code=@"
+set ^ #=& set "0=%~f0"& set 1=;DIR2ISO %*& powershell -nop -c "%#%"& exit /b %errorcode%
+function DIR2ISO ($dir,$iso,$label='DVD_ROM') {if (!(test-path -Path $dir -pathtype Container)) {"[ERR] $dir"; return 1}; $code=@"
  using System; using System.IO; using System.Runtime.Interop`Services; using System.Runtime.Interop`Services.ComTypes;
  public class dir2iso {public int AveYo=2021; [Dll`Import("shlwapi",CharSet=CharSet.Unicode,PreserveSig=false)]
  internal static extern void SHCreateStreamOnFileEx(string f,uint m,uint d,bool b,IStream r,out IStream s);
  public static int Create(string file, ref object obj, int bs, int tb) { IStream dir=(IStream)obj, iso;
  try {SHCreateStreamOnFileEx(file,0x1001,0x80,true,null,out iso);} catch(Exception e) {Console.WriteLine(e.Message); return 1;}
  int d=tb>1024 ? 1024 : 1, pad=tb%d, block=bs*d, total=(tb-pad)/d, c=total>100 ? total/100 : total, i=1, MB=(bs/1024)*tb/1024;
- Console.Write("{0,2}%  {1}MB {2}  :DIR2ISO",0,MB,file); if (pad > 0) dir.CopyTo(iso, pad * block, Int`Ptr.Zero, Int`Ptr.Zero);
+ Console.Write("{0,2}%  {1}MB {2}  DIR2ISO",0,MB,file); if (pad > 0) dir.CopyTo(iso, pad * block, Int`Ptr.Zero, Int`Ptr.Zero);
  while (total-- > 0) {dir.CopyTo(iso, block, Int`Ptr.Zero, Int`Ptr.Zero); if (total % c == 0) {Console.Write("\r{0,2}%",i++);}}
- iso.Commit(0); Console.WriteLine("\r{0,2}%  {1}MB {2}  :DIR2ISO", 100, MB, file); return 0;} }
-"@; & { $cs=new-object CodeDom.Compiler.CompilerParameters; $cs.GenerateInMemory=1 #:: no`warnings
- $compile=(new-object Microsoft.CSharp.CSharpCodeProvider).CompileAssemblyFromSource($cs, $code)
- $BOOT=@(); $bootable=0; $mbr_efi=@(0,0xEF); $images=@('boot\etfsboot.com','efi\microsoft\boot\efisys.bin') #:: efisys_noprompt
- 0,1|% { $bootimage=join-path $dir -child $images[$_]; if (test-path -Path $bootimage -pathtype Leaf) {
- $bin=new-object -ComObject ADODB.Stream; $bin.Open(); $bin.Type=1; $bin.LoadFromFile($bootimage)
- $opt=new-object -ComObject IMAPI2FS.BootOptions; $opt.AssignBootImage($bin.psobject.BaseObject); $opt.Manufacturer='Microsoft'
- $opt.PlatformId=$mbr_efi[$_]; $opt.Emulation=0; $bootable=1; $BOOT += $opt.psobject.BaseObject } }
- $fsi=new-object -ComObject IMAPI2FS.MsftFileSystemImage; $fsi.FileSystemsToCreate=4; $fsi.FreeMediaBlocks=0
- if ($bootable) {$fsi.BootImageOptionsArray=$BOOT}; $CONTENT=$fsi.Root; $CONTENT.AddTree($dir,$false); $fsi.VolumeName=$vol
- $obj=$fsi.CreateResultImage(); $r=[dir2iso]::Create($iso,[ref]$obj.ImageStream,$obj.BlockSize,$obj.TotalBlocks) };[GC]::Collect()
+ iso.Commit(0); Console.WriteLine("\r{0,2}%  {1}MB {2}  DIR2ISO",100,MB,file); return 0;} }
+"@; & { $cs = new-object CodeDom.Compiler.CompilerParameters; $cs.GenerateInMemory = 1 #:: ` used to silence ps eventlog
+ $compile = (new-object Microsoft.CSharp.CSharpCodeProvider).CompileAssemblyFromSource($cs, $code)
+ $BOOT = @(); $bootable = 0; $mbr_efi = @(0,0xEF); $images = @('boot\etfsboot.com','efi\microsoft\boot\efisys.bin') #:: _noprompt
+ 0,1|% { $bootimage = join-path $dir -child $images[$_]; if (test-path -Path $bootimage -pathtype Leaf) {
+ $bin = new-object -ComObject ADODB.Stream; $bin.Open(); $bin.Type = 1; $bin.LoadFromFile($bootimage)
+ $opt = new-object -ComObject IMAPI2FS.BootOptions;$opt.AssignBootImage($bin.psobject.BaseObject); $opt.PlatformId = $mbr_efi[$_] 
+ $opt.Emulation = 0; $bootable = 1; $opt.Manufacturer = 'Microsoft'; $BOOT += $opt.psobject.BaseObject } }
+ $fsi = new-object -ComObject IMAPI2FS.MsftFileSystemImage; $fsi.FileSystemsToCreate = 4; $fsi.FreeMediaBlocks = 0
+ if ($bootable) {$fsi.BootImageOptionsArray = $BOOT}; $TREE = $fsi.Root; $TREE.AddTree($dir,$false); $fsi.VolumeName = $label
+ $obj = $fsi.CreateResultImage(); $ret = [dir2iso]::Create($iso,[ref]$obj.ImageStream,$obj.BlockSize,$obj.TotalBlocks) }
+ [GC]::Collect(); return $ret
 } #:DIR2ISO:#  export directory as (bootable) udf iso - lean and mean snippet by AveYo, 2021
+::--------------------------------------------------------------------------------------------------------------------------------
 
-::# there were other such solutions before :DIR2ISO, but none was as reliable (and non bloated)
-::# would be nice to mention the source of inspiration, not just rename some vars and make it your own
-::------------------------------------------------------------------------------------------------------------------------------::
+#:DOWNLOAD:# [PARAMS] "url" "file" [optional]"path"
+set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:DOWNLOAD\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
+set ^ #=& set "0=%~f0"& set 1=;DOWNLOAD %*& powershell -nop -c "%#%"& exit /b %errorcode%
+function DOWNLOAD ($u, $f, $p = (get-location).Path) {
+  Import-Module BitsTransfer; $wc = new-object Net.WebClient; $wc.Headers.Add('user-agent','ipad') 
+  $file = join-path $p $f; $s = 'https://'; $i = 'http://'; $d = $u.replace($s,'').replace($i,''); $https = $s+$d; $http = $i+$d 
+  foreach ($url in $http, $https) { 
+    if (([IO.FileInfo]$file).Exists) {return}; try {Start-BitsTransfer $url $file -ea 1} catch {}
+    if (([IO.FileInfo]$file).Exists) {return}; try {$wc.DownloadFile($url, $file)} catch {}
+  }  
+  if (([IO.FileInfo]$file).Exists) {return}; write-host -fore Yellow " $f download failed "
+} #:DOWNLOAD:# try download url via bits, net, and http/https - snippet by AveYo, 2021
+::--------------------------------------------------------------------------------------------------------------------------------
 
-#:CHOICE:#  [PARAMS] indexvar "c,h,o,i,c,e,s"  [OPTIONAL]  default-index "title" fontsize backcolor forecolor winsize
-set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICE\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
-set ^ #=&set "0=%~f0"& set 1=;%0 %*& (for /f %%x in ('powershell -nop -c "%#%"') do set "%1=%%x")& exit/b
-function :CHOICE ($index,$choices,$def=1,$title='Choices',[int]$sz=12,$bc='MidnightBlue',$fc='Snow',[string]$win='300') {
+#:CHOICES:#  [PARAMS] indexvar "c,h,o,i,c,e,s"  [OPTIONAL]  default-index "title" fontsize backcolor forecolor winsize
+set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICES\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
+set ^ #=&set "0=%~f0"& set 1=;CHOICES %*& (for /f %%x in ('powershell -nop -c "%#%"') do set "%1=%%x")& exit /b
+function CHOICES ($index,$choices,$def=1,$title='Choices',[int]$sz=12,$bc='MidnightBlue',$fc='Snow',[string]$win='300') {
  [void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); $f=new-object Windows.Forms.Form; $global:ret=''
- $bt=@(); $i=1; $ch=($choices+',Cancel').split(','); $ch |foreach {$b=New-Object Windows.Forms.Button; $b.Font='Tahoma,'+$sz
+ $bt=@(); $i=1; $ch=($choices+',Cancel').split(','); $ch |foreach {$b=New-Object Windows.Forms.Button; $b.Font='Consolas,'+$sz
  $b.Name=$i; $b.Text=$_;  $b.Margin='0,0,9,9'; $b.Location='9,'+($sz*3*$i-$sz); $b.MinimumSize=$win+',18'; $b.AutoSize=1
  $b.add_GotFocus({$this.BackColor=$fc; $this.ForeColor=$bc}); $b.add_LostFocus({$this.BackColor=$bc; $this.ForeColor=$fc})
  $b.FlatStyle=0; $b.Cursor='Hand'; $b.add_Click({$global:ret=$this.Name;$f.Close()}); $f.Controls.Add($b); $bt+=$b; $i++}
  $f.Text=$title; $f.BackColor=$bc; $f.ForeColor=$fc; $f.StartPosition=4; $f.AutoSize=1; $f.AutoSizeMode=0; $f.MaximizeBox=0
  $f.AcceptButton=$bt[$def-1]; $f.CancelButton=$bt[-1]; $f.Add_Shown({$f.Activate();$bt[$def-1].focus()})
- $null=$f.ShowDialog(); $index=$global:ret; if ($index -eq $ch.length) {return 0} else {return $index}
-} #:CHOICE:#  gui dialog with inverted focus returning selected index - lean and mean snippet by AveYo, 2018 - 2021
-::------------------------------------------------------------------------------------------------------------------------------::
+ $f.ShowDialog() >''; $index=$global:ret; if ($index -eq $ch.length) {return 0} else {return $index}
+} #:CHOICES:#  gui dialog with inverted focus returning selected index - lean and mean snippet by AveYo, 2018 - 2021
+::--------------------------------------------------------------------------------------------------------------------------------
 
-#:CHOICE.2x:#  [INTERNAL]
-set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICE.2x\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
-set ^ #=&set "0=%~f0"&set 1=;%0 %*&(for /f "tokens=1,2" %%x in ('powershell -nop -c "%#%"') do set %1=%%x&set %5=%%y)& exit/b
-function :CHOICE.2x {if (!(get-command :CHOICE -ea 0)) {iex($f0-split '#\:CHOICE\:' ,3)[1]}; function :LOOP { $a=$args
- $c1 = @($a[0], $a[1], $a[2], $a[3],  $a[-4], $a[-3], $a[-2], $a[-1]); $r1= :CHOICE @c1; if ($r1 -lt 1) {return "0 0"}
+#:CHOICES2:#  [INTERNAL]
+set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:CHOICES2\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
+set ^ #=&set "0=%~f0"&set 1=;CHOICES2 %*&(for /f "tokens=1,2" %%x in ('powershell -nop -c "%#%"')do set %1=%%x&set %5=%%y)&exit /b
+function CHOICES2 {iex($f0-split '#\:CHOICES\:' ,3)[1]; function :LOOP { $a=$args
+ $c1 = @($a[0], $a[1], $a[2], $a[3],  $a[-4], $a[-3], $a[-2], $a[-1]); $r1= CHOICES @c1; if ($r1 -lt 1) {return "0 0"}
  $a_7_ = $a[1].Split(',')[$r1-1] + ' ' + $a[7] #:: use 1st dialog result in the title for 2nd dialog
- $c2 = @($a[4], $a[5], $a[6], $a_7_,  $a[-4], $a[-3], $a[-2], $a[-1]); $r2= :CHOICE @c2; if ($r2 -ge 1) {return "$r1 $r2"}
+ $c2 = @($a[4], $a[5], $a[6], $a_7_,  $a[-4], $a[-3], $a[-2], $a[-1]); $r2= CHOICES @c2; if ($r2 -ge 1) {return "$r1 $r2"}
  if ($r2 -lt 1) {$a[2]=$r1; :LOOP @a} }; :LOOP @args #:: index1 choices1 def1 title1  index2 choices2 def2 title2  font bc tc win
-} #:CHOICE.2x:#  MediaCreationTool.bat gui pseudo-menu via :CHOICE snippet, streamlined in a single powershell instance
-::------------------------------------------------------------------------------------------------------------------------------::
+} #:CHOICES2:#  MediaCreationTool.bat gui pseudo-menu via CHOICES snippet, streamlined in a single powershell instance
+::--------------------------------------------------------------------------------------------------------------------------------
 
 #:PRODUCTS_XML:#  [INTERNAL]    refactored with less looping over Files; addressed more powershell 2.0 quirks
 set ^ #=$f0=[io.file]::ReadAllText($env:0); $0=($f0-split '#\:PRODUCTS_XML\:' ,3)[1]; $1=$env:1-replace'([`@$])','`$1'; iex($0+$1)
-set ^ #=& set "0=%~f0"& set 1=;%0 %*& powershell -nop -c "%#%"& exit/bat/ps1
-function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",[Text.Encoding]::UTF8); $root = $null
- $eulas = 0; $langs = 0; $ver = $env:VER; $vid = $env:VID; $xi = $env:XI; if ($xi-eq'11') {$vid = "11 $env:VIS"}
- ${\\}='ht'+'tp://'; $url = "${\\}fg.ds.b1.download.windowsupdate.com/"
+set ^ #=& set "0=%~f0"& set 1=;PRODUCTS_XML %*& powershell -nop -c "%#%"& exit /bat/ps1
+function PRODUCTS_XML { [xml]$xml = [io.file]::ReadAllText("$pwd\products.xml",[Text.Encoding]::UTF8); $root = $null
+ $eulas = 0; $langs = 0; $ver = $env:VER; $vid = $env:VID; $X = $env:X; if ($X-eq'11') {$vid = "11 $env:VIS"}
+ $url = "http://b1.download.windowsupdate.com/"
 #:: apply/insert Catalog version attribute for MCT compatibility
  if ($null -ne $xml.SelectSingleNode('/MCT')) {
    $xml.MCT.Catalogs.Catalog.version = $env:CC; $root = $xml.SelectSingleNode('/MCT/Catalogs/Catalog/PublishedMedia')
  } else {
    $temp = [xml]('<?xml version="1.0" encoding="UTF-8"?><MCT><Catalogs><Catalog version="' + $env:CC + '"/></Catalogs></MCT>')
-   $null = $temp.SelectSingleNode('/MCT/Catalogs/Catalog').AppendChild($temp.ImportNode($xml.PublishedMedia,$true))
+   $temp.SelectSingleNode('/MCT/Catalogs/Catalog').AppendChild($temp.ImportNode($xml.PublishedMedia,$true)) >''
    $xml = $temp; $root = $xml.SelectSingleNode('/MCT/Catalogs/Catalog/PublishedMedia')
  }
  foreach ($l in $root.ChildNodes) {if ($l.LocalName -eq 'EULAS') {$eulas = 1}; if ($l.LocalName -eq 'Languages') {$langs = 1} }
 #:: apply/insert EULA url fix to prevent MCT timing out while downloading it (likely TLS issue under naked Windows 7 host)
- $eula = "${\\}download.microsoft.com/download/C/0/3/C036B882-9F99-4BC9-A4B5-69370C4E17E9/EULA_MCTool_"; $rtf = '_6.27.16.rtf'
- if ($eulas) {
-   foreach ($i in $root.EULAS.EULA) {$i.URL = $eula + $i.LanguageCode.ToUpperInvariant() + $rtf}
- } else {
+ $eula = "http://download.microsoft.com/download/C/0/3/C036B882-9F99-4BC9-A4B5-69370C4E17E9/EULA_MCTool_"
+ if ($eulas -eq 1) { foreach ($i in $root.EULAS.EULA) {$i.URL = $eula + $i.LanguageCode.ToUpperInvariant() + '_6.27.16.rtf'} }
+ if ($eulas -eq 0) {
    $tmp = [xml]('<EULA><LanguageCode/><URL/></EULA>'); $el = $xml.CreateElement('EULAS'); $node = $xml.ImportNode($tmp.EULA,$true)
    foreach ($lang in ($root.Languages.Language |where {$_.LanguageCode -ne 'default'})) {
-     $i = $el.AppendChild($node.Clone()); $lc = $lang.LanguageCode; $i.LanguageCode = $lc; $i.URL = $eula + $lc.ToUpperInvariant() + $rtf
+     $i = $el.AppendChild($node.Clone()); $lc = $lang.LanguageCode
+     $i.LanguageCode = $lc; $i.URL = $eula + $lc.ToUpperInvariant() + '_6.27.16.rtf'
    }
-   $null = $root.AppendChild($el)
+   $root.AppendChild($el) >''
  }
 #:: friendlier version + combined consumer editions label (not doing it for business too here as it would be ignored by mct)
- if ($langs) {
+ if ($langs -eq 1) {
    if ($ver -gt 15063) {$CONSUMER = "$vid Home | Pro | Edu"} else {$CONSUMER = "$vid Home | Pro"} #:: 1511
    foreach ($i in $root.Languages.Language) {
      foreach ($l in $i.ChildNodes) { $l.InnerText = $l.InnerText.replace("Windows 10", $vid) }
@@ -707,7 +863,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
  $root.Files.File | & { process {
    $_arch = $_.Architecture; $_lang = $_.LanguageCode; $_edi = $_.Edition; $_loc = $_.Edition_Loc; $ok = $true
   #:: clear ARM64 and %BASE_CHINA% entries to simplify processing - TODO: ARM support
-   if ($_arch -eq 'ARM64' -or ($ver -lt 22000 -and $_loc -eq '%BASE_CHINA%')) {$null = $root.Files.RemoveChild($_); return}
+   if ($_arch -eq 'ARM64' -or ($ver -lt 22000 -and $_loc -eq '%BASE_CHINA%')) {$root.Files.RemoveChild($_) >''; return}
   #:: unhide combined business editions in xml that include them: 1709 - 21H1; unhide Education on 1507 - 1511; better label
    if ($env:UNHIDE_BUSINESS -ge 1) {
      if ($_edi -eq 'Enterprise' -or $_edi -eq 'EnterpriseN') {$_.IsRetailOnly = 'False'; $_.Edition_Loc = $BUSINESS}
@@ -715,7 +871,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
    }
  }}
  $lines = ([io.file]::ReadAllText($env:0)-split':PS_INSERT_BUSINESS_CSV\:')[1]; $insert = $false
- if ($null -ne $lines -and $env:INSERT_BUSINESS -ge 1 -and 19044,19042,19041,18363,15063,14393 -contains $ver) {
+ if ($null -ne $lines -and $env:INSERT_BUSINESS -ge 1 -and 19043,19042,19041,18363,15063,14393 -contains $ver) {
    $csv = ConvertFrom-CSV -Input $lines.replace('sr-rs','sr-latn-rs') | & { process { if ($_.Ver -eq $ver) {$_} } }
    $edi = @{ent='Enterprise';enN='EnterpriseN';edu='Education';edN='EducationN';clo='Cloud';clN='CloudN';
             pro='Professional';prN='ProfessionalN'}
@@ -737,7 +893,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
        $name = $env:CB + $cli + $arch + 'FRE_' + $lang; $c.Edition_Loc = "$vid $BUSINESS"
        $c.FileName = $name + '.esd'; $c.Size = $_size; $c.Sha1 = $_sha1
        $c.FilePath = $url + $_dir + $up + $env:CT + $name.ToLowerInvariant() + '_' + $_sha1 + '.esd'
-       $null = $root.Files.AppendChild($c)
+       $root.Files.AppendChild($c) >''
      }}}
    }
  }
@@ -751,7 +907,7 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
        $arch = $_.Architecture; $lang = $_.LanguageCode; $item = $items["$chan, $lang"]; if ($null -eq $item) {return}
        if ($arch -eq 'x64')     {$_size = $item[0].Size_x64; $_sha1 = $item[0].Sha1_x64; $_dir = $item[0].Dir_x64}
        elseif ($arch -eq 'x86') {$_size = $item[0].Size_x86; $_sha1 = $item[0].Sha1_x86; $_dir = $item[0].Dir_x86} 
-       if ('' -eq $_size) {$null = $root.Files.RemoveChild($_); return}
+       if ('' -eq $_size) {$root.Files.RemoveChild($_) >''; return}
        $name = $env:CB + $cli + $chan.ToUpperInvariant() + '_' + $arch + 'FRE_' + $_.LanguageCode
        $_.FileName = $name + '.esd'; $_.Size = $_size; $_.Sha1 = $_sha1
        $_.FilePath = $url + $_dir + '/upgr/' + $env:CT + $name.ToLowerInvariant() + '_' + $_sha1 + '.esd'
@@ -759,29 +915,31 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
    }
  }
 #:: clone Professional / Enterprise to work around MCT quirks when host OS is ProEdu / ProWS / EnterpriseS / Embedded
- $clone = 'Embedded','IoTEnterpriseS','EnterpriseS'; $cloneN = 'EnterpriseSN'
- if ($ver -le 16299) {$clone +='ProfessionalEducation','ProfessionalWorkstation'};   if ($ver -le 10586) {$clone +='Enterprise'}
- if ($ver -le 16299) {$cloneN+='ProfessionalEducationN','ProfessionalWorkstationN'}; if ($ver -le 10586) {$cloneN+='EnterpriseN'}
+ $source = 'Enterprise'; $sourceN = 'EnterpriseN'; $clone = 'Embedded','IoTEnterpriseS','EnterpriseS'; $cloneN = 'EnterpriseSN'
+ if ($ver -le 10586) {$source = 'Professional'; $sourceN = 'ProfessionalN'; $clone +='Enterprise'; $cloneN+='EnterpriseN'}
+ if ($ver -le 16299) {$clone +='ProfessionalEducation','ProfessionalWorkstation'}
+ if ($ver -le 16299) {$cloneN+='ProfessionalEducationN','ProfessionalWorkstationN'}
  if ($env:UNHIDE_BUSINESS -ge 1) {
    $root.Files.File | & { process {
-     if ($_.Edition -eq "Enterprise") {
+     if ($_.Edition -eq $source) {
        foreach ($s in $clone) {
          $c = $_.Clone(); if ($c.HasAttribute('id')) {$c.RemoveAttribute('id')}
-         $c.IsRetailOnly='False'; $c.Edition=$s; $null = $root.Files.AppendChild($c)
+         $c.IsRetailOnly='False'; $c.Edition=$s; $root.Files.AppendChild($c) >''
        }
      }
-     elseif ($_.Edition -eq "EnterpriseN") {
+     elseif ($_.Edition -eq $sourceN) {
        foreach ($s in $cloneN) {
          $c = $_.Clone(); if ($c.HasAttribute('id')) {$c.RemoveAttribute('id')}
-         $c.IsRetailOnly='False'; $c.Edition=$s; $null = $root.Files.AppendChild($c)
+         $c.IsRetailOnly='False'; $c.Edition=$s; $root.Files.AppendChild($c) >''
        }
    }}}
  }
  $xml.Save("$pwd\products.xml");
-} #:PRODUCTS_XML:#  MediaCreationTool.bat configuring products.xml in one go
-::------------------------------------------------------------------------------------------------------------------------------::
 
-::# Insert business esd links in 1607,1703; Update 1909,2004,20H2,21H2,11 by hand until an updated products.xml from microsoft
+} #:PRODUCTS_XML:#  MediaCreationTool.bat configuring products.xml in one go
+::--------------------------------------------------------------------------------------------------------------------------------
+
+::# Insert business esd links in 1607,1703; Update 1909,2004,20H2,21H2 by hand until an updated products.xml from microsoft
 ::# Following are condensed ver,edition,lang,sizes,hashes,dirs to be recomposed into full official ESD links for MCT
 ::# I have chosen to generate them on-the-fly here instead of linking to third-party hosted pre-edited products.xml
 ::# Can skip copy-pasting some or all entries if not interested in updating the esd links for specific versions
@@ -1069,21 +1227,14 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
 ::#,19042,ret,bg-bg,4273660900,3132767383,290eaef0e89c9374f8a85f22ca89da55f1ed3d4f,b1ddd971c9408d4f5d3953486eaa71db8f8d01af,c,d
 ::#,19042,ret,cs-cz,4266525711,3141417920,c9a31d4f86ea028f8b54abf5320426a1042739f4,6a5ff8da0af584aa217643c58c3dd27ac5639ed0,c,d
 ::#,19042,ret,da-dk,4277198628,3172322209,8faa45a5e36e200c991f96b5d03713d177392dbf,d28ad12137315b78ddfec39b398f7726c988b376,c,c
-::#,19042,ret,de-de,4412749670,3265647481,d4d41c12bf6e5f40d499954f765f86c07372cf44,b21e63f5c90b9b10bed1b212d1a7d504dadbf51b,c,d
 ::#,19042,ret,el-gr,4286406975,3156522926,3b4b401e6f07d4aa61e2800665c971a6c3a5ec3e,4db08254c310bc18b18d48a1a1b140bddf6212df,c,c
-::#,19042,ret,en-gb,4373104662,3247657717,e2fdac8f69e3e36153ed95d0c566f97e23fc3ad8,688617023fc69ed97c4b64fd5ca639d1b6729bf2,c,c
-::#,19042,ret,en-us,4384081926,3234272628,5a2e6b0cd359892c32e363eb3e3b9d15037fa603,2678d52a170b3a7ce920589363493265b4b368a5,c,c
-::#,19042,ret,es-es,4411781854,3269003307,17617fa0deabe638d34b0085d4cbd92fef588725,680e63776a3be2f3f0c1a3ed679422f9f94e1165,c,c
 ::#,19042,ret,es-mx,4136440145,3071040092,b39b9725d6724222355ab51dc09b71a65ee808b0,6a0c555edfa352a53c094f8fe4b5f1e5b3a80fc7,d,c
 ::#,19042,ret,et-ee,4243981042,3114898234,721f6aeef310493ae2a68b2464c3395c37de02d3,3a5c1f1c052cfee024b2f97eb9dfac3c1d835420,c,c
 ::#,19042,ret,fi-fi,4285027992,3131390225,95b0cf42a3c3e0a7d90f06353aa4f66318a18610,7b18c0e5be70e65f9f57efa06c20624c9f4aea04,c,c
 ::#,19042,ret,fr-ca,4140214723,3080125608,a54a32bb93a8ff87140c7339e3bf885c73bc1048,35fdf7777c7e923dc9163c0e9ceddc5157e70eb1,c,c
-::#,19042,ret,fr-fr,4401989199,3252479935,a3babf96d959a971527ef721ba62820bc74e2e10,e0d7d6e2e7319b13d2cc186e90b416afbf53002c,c,c
 ::#,19042,ret,he-il,4102091978,3041784317,094e61c556c8a6af3f99ed2e091cd91231f5ed34,00e1293e30bb7c4115fc04f4b92a3df19a88f960,c,c
 ::#,19042,ret,hr-hr,4241729051,3108733766,cac865b558f0967196eb375ae3f63e6a1982a8d4,e57fe8f5d322546b65a194cb105c3905b8dff3aa,c,d
 ::#,19042,ret,hu-hu,4264742770,3148275898,41ee085b20c3d4525c6a7120d4f209b36d4865fe,d257c0906daaced84a7e79de3aa6c58cf9a6205f,c,d
-::#,19042,ret,it-it,4310805724,3199694812,325b93a4fd2b21c2fbba59d48eb815dbd1b9f003,b6a9f81fab6f862ccc2b635c37a09481da895bff,c,c
-::#,19042,ret,ja-jp,4301179358,3225790156,5ca9672b82df286e8562ab9db08fd285f95ced26,910e9059d6e9f4fc5205fb3b76543c7d6a97b5b5,c,c
 ::#,19042,ret,ko-kr,4111939832,3055115335,87f123052a36a0782874bf0025a7b1c8334575ad,7d6acc7ef7f7e98a1aa676772401e62b7f6f1736,c,c
 ::#,19042,ret,lt-lt,4248793438,3110403124,eeec57087116db3c1db2b0862b0edc870a1add01,c33648d6fd31141675a3aa804247a6958d77c560,c,d
 ::#,19042,ret,lv-lv,4233190462,3097361144,5d20985e16fcafd57b7d1c0870112cc73aa5e2ec,de712630acf39d4191c04de678e53dc78397b58f,c,d
@@ -1091,7 +1242,6 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
 ::#,19042,ret,nl-nl,4271095900,3118770342,bfac21d14ac28e81f0257dab14a6ae24f5d264ba,cafa08c0892c98e1fd4f2da37d8a2e52f560891c,d,c
 ::#,19042,ret,pl-pl,4289923972,3159835035,aa5873a2ae228ad397df4d781522c1c6e7ae7601,d8d189df881059404e08da271440f8882c2276d4,d,c
 ::#,19042,ret,pt-br,4141680670,3074275948,0dbbc4293c468298358f32ae2fc70672bd8ef865,77a8e7c6a692a4ddddeb47cd96ab5ef8b2d1a50a,c,c
-::#,19042,ret,pt-pt,4338262773,3171642188,209132d42cc0ebec6958ee215436f4b0973968f5,549d38f65548dc45c4e2244a6963ef6b6dc6d393,c,c
 ::#,19042,ret,ro-ro,4250933129,3114487464,15f730a42ac220ab73e80c46ebc2eae1908761ad,a3edd4b0109b057891e9911bf7cda2353ccf6b36,c,d
 ::#,19042,ret,ru-ru,4146895708,3074675530,07277c99b6dccb64be4aa1b09bf5886662b64160,b814b43304f277307d8c00dd6ac23a4496a10930,c,c
 ::#,19042,ret,sk-sk,4252903736,3138506076,2c514f19c1e4832f9688afeb78e4fc419ec484f1,19e20b3164eff8abf2fa12feac50a5abfc183000,c,c
@@ -1101,8 +1251,6 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
 ::#,19042,ret,th-th,4085961227,3034206679,7605e8b4b305942228d86328e568a8a2ad256127,d1f8d0be8ef8ed7539e5d586f4ddbfbf8ca47ce5,c,c
 ::#,19042,ret,tr-tr,4092026747,3016412954,0593f24849ea19b18a9846cc393d92e7c06ae090,e7b0fb6a83d0ae794cf01f2bf4e8e5e38daf692d,d,c
 ::#,19042,ret,uk-ua,4087452987,3020783590,3e7e75ba23674938e945238c89bfdb13bc20733b,9f7dc72d30aeacb241213e1bdde83f9cc0314cf1,c,c
-::#,19042,ret,zh-cn,4361823791,3268472558,d83f502ee8f3c824ae0225e2ec6bd97acc4a1ef0,9f46531cc79c290174b87b2708241309d5b1c8b1,d,c
-::#,19042,ret,zh-tw,4296688007,3228331368,89a5c4210f24c2a1cbefc7116bb382c5f68b3422,ed0f7672ecbf18cb689815252d2147859bb65895,d,c
 ::#,19042,vol,ar-sa,4016364432,2980601274,32d2f930cadfdd26c0af6d46c522187f56d27585,f075e5d4d7938a4113b5c95bc63bf6f0bd22b417,d,d
 ::#,19042,vol,bg-bg,4144049644,3037145305,2188560ee3722d14aac06a1830e60220f302e513,7b4d444aad37fbcd813c1306ae25433ae1440dd6,d,d
 ::#,19042,vol,cs-cz,4154663853,3026661906,46f09ce7f4ece42acb38ec276d14721c0dcc41e4,24344c721aaf720a36a36bbc33c09d0f2ce10bcb,d,c
@@ -1141,79 +1289,79 @@ function :PRODUCTS_XML { [xml]$xml = [IO.File]::ReadAllText("$pwd\products.xml",
 ::#,19042,vol,uk-ua,3967514562,2935859126,b90b0e27d64e94b015a4e6676b70bfc605ead499,addbc9de2467235ce16f9cfe9412329fa314d4ce,c,c
 ::#,19042,vol,zh-cn,4222077319,3173116376,b2d57b624a65882624df8c073075866a8936805d,8acbc8de96ef2a436881d1d7afae183d7f9c0506,d,d
 ::#,19042,vol,zh-tw,4201853468,3156032078,de338634b328c224a685f7508389833ab4d57ff5,d2a07c7dee382d8977ebeabf1b348270d450a192,d,c
-::#,19044,ret,ar-sa,3700248321,2672530783,7fefc919898a77d6ca1e58feeb55c7418c730716,3f0a1f3d0666ebd5bd9ffa8827dfd879044cc2b7,d,d
-::#,19044,ret,bg-bg,3767522254,2694677969,aeb76bd9c2ecc9cc9b05678f62bf8df2c79069c6,6f813c4225053a291b9ba1cc7e0595e92e70066c,d,d
-::#,19044,ret,cs-cz,3768273252,2684008743,2e2a290636e4acb8726f3641ffe0a983bfa8624b,1582b4a7f7afbb3a5487e414f045bb36bb9199a0,d,d
-::#,19044,ret,da-dk,3785223157,2708557250,c6e644d76961d31e7914b30e5217280c42a7c251,4d40d0633eb24c22d87dbc51dd916ebe67b4880a,c,d
-::#,19044,ret,de-de,3898195415,2816964840,c0d2386a6bf4f2fa207d2fccdb316d33b7b2468b,742f250f403b63c1cb56e66b6a34c3f2c2ad617c,c,d
-::#,19044,ret,el-gr,3780376742,2703093963,9b359c4a217ee863168c6969a4538b16682e6f6e,fdb3a82f7331009ca9d9fac1624f5695a869662f,c,d
-::#,19044,ret,en-gb,3883364538,2793843366,0c15a4f8031c661f732e46b54d9f2b4e90b2e700,ff7d1a3422a914b21f0ed693735f39da23d9c868,c,c
-::#,19044,ret,en-us,3879448922,2806945124,e2492e60dcdbffc18f828167e96699335aa8396c,55fbe6c4a5fa8180fb0ac7abe59cfd99b7b17cbf,d,d
-::#,19044,ret,es-es,3895200748,2807959121,c13af1f5261351bcf39738c0872da9d9d63017a6,a526d9fa1f222513d3677395ecaed48258af3964,d,d
-::#,19044,ret,es-mx,3692361324,2670351172,6e5286a7c422396b0d6c57eaa7538eaf378a419b,87cb9d10c3270d1225f0860d18ad0dbdda2ab52a,d,d
-::#,19044,ret,et-ee,3734745792,2664736174,e6da54d987792ddfefbf45c6b1a13822ec93c3d6,c8fca4e52555246df89382d7249c19dbf5cadc82,d,c
-::#,19044,ret,fi-fi,3771277588,2689878310,6a8e3e7bc2de14bf66c3294e565abd1689c5e127,392722ce514970ecaf89130aaeecc20f3043322a,d,c
-::#,19044,ret,fr-ca,3700126758,2684054561,7b9f9614340313d32eaf99780d7d61c3766dc95a,0353826e5ab7e883a5803a8e52ba7124a121b673,c,d
-::#,19044,ret,fr-fr,3892413920,2801795105,181145b8b6459480d84a6ead868926604774e2a2,83dbccefb119a45fe1efd4647381932b2b5e0ce1,d,d
-::#,19044,ret,he-il,3661740414,2646639471,448b37af3215029afe4b2d96e9a0f8be6ac1b376,baf71450aa3e0fc89d1be7eaed7b57a25367e03f,d,d
-::#,19044,ret,hr-hr,3739199794,2671567534,00e3171a0de6d533f918a407b678ec0d5a8f0b1c,5fcd5bef8cfaf0186b623c48b884c42c6153a703,d,c
-::#,19044,ret,hu-hu,3764804788,2684567318,081825dfa41f078c85e228508d6386905b8e009c,d905672122117fe63ece27eecaef953104f7ffe5,c,d
-::#,19044,ret,it-it,3812706342,2734258268,5a166b605e2da935e914a48a77a9e9afb2052cbd,788db00625a2b74abe2f2f1062d711bddbb53208,c,d
-::#,19044,ret,ja-jp,3848024672,2828312008,e0f708eab8eaa9f4c7a98c81a15b0ffcfa1aaba2,728b2494c1ae96757b7e8c062c674cf5c7bd50e1,c,c
-::#,19044,ret,ko-kr,3679323990,2657045328,c4816c63965428fde8d02758b054d36c0c3c7cfa,b59210ed6fac739490386d1c3f8783e926bfd8fb,c,c
-::#,19044,ret,lt-lt,3738863826,2670773854,4993cc8c8d09aa7ddaeb31353a4dfb5fe685c568,3d3e410a0be694d6b8f80b75621ce41a3335ed31,d,d
-::#,19044,ret,lv-lv,3738072447,2667908221,f7ad386977726d7f3803554e5dc734582534a52a,10a7c24c7bc6499be97944084ad77bedcdf4ae83,c,d
-::#,19044,ret,nb-no,3762486855,2683539375,4724ab6d319ee78859e825d5100ef5a5b56df6a3,87723b3989cf562f120f6da883da932b27dc7be4,c,d
-::#,19044,ret,nl-nl,3767602841,2687207206,ab4e0c3ba91181f036acb38ed2772a591b527e09,9b1dee5b6b8ac763774275306f8c4812b62f9257,c,c
-::#,19044,ret,pl-pl,3795387416,2704836669,22ad1a9241df785f494d16af9214d0ac25ca1705,d029d98437e494b70dd1d5ba4ab9688ae4b95657,d,d
-::#,19044,ret,pt-br,3698981462,2672829267,4e47104c68842201d83a5d60b2e0e9bfe1d9e83e,71927d2312e6e712d939378f3cd54a052bcc8350,d,c
-::#,19044,ret,pt-pt,3809727930,2723964998,710f808e588468d8dcb92007e95d0afb827158be,c73889c17bc00d4c0e658e56466880474173f07e,d,d
-::#,19044,ret,ro-ro,3746072273,2670334605,72433a84f917826221d6041cb0e4d729c642cf22,181f777bfb07f4043ca77da8d71660e63ebec646,c,c
-::#,19044,ret,ru-ru,3691840398,2673615717,41fb38d346c65855bbca5504eb1b28ae5abcaab2,b7ab81613304d99eb3ab7df26cceb57f496ab0a1,d,d
-::#,19044,ret,sk-sk,3751252917,2678839242,88de8496fcb188430f0735b43f3aae167f810630,87665b97791b212172271b52ca3ce9feff68001c,d,d
-::#,19044,ret,sl-si,3752120297,2675904808,cf50151b20235380a070a7f1fb8e39f37d57ce6c,140349f858c6d653f1a742fa5da5ca8d07c1ba9d,c,c
-::#,19044,ret,sr-rs,3629218695,2607972376,a4ed66ab7e34176f50f7b9d4421ef005b254fc41,025f5e69f58c8248a6419c56454e11a6fe368e35,d,d
-::#,19044,ret,sv-se,3768394308,2689564863,a00461f1087acacfd302d57b7f859c62a1f4c12f,91bc89b03a19731701c65478f7efa4081c51ae42,d,d
-::#,19044,ret,th-th,3651315358,2625558338,9ece3cd7bd303b6397c454b5faa8a1f8f8c8b81a,7e4ab55f2088a58092cbcd46e766b4257bf46d07,d,c
-::#,19044,ret,tr-tr,3650178931,2619600082,4a41e842483045c912a3ef485bc56cb871b9e553,c2e8b0beec931be56f5eb5cebf8a0e13e038d38c,c,c
-::#,19044,ret,uk-ua,3649711542,2626653000,d44f094303a84304b6aa772c17660573415b89d9,d733c3484263f0d99feb75780aa747a5556e385e,d,c
-::#,19044,ret,zh-cn,3899449991,2870012154,b3bf39da71b54027ec3d6698803b8429393de608,c42be1e846b92cb66894cc57d63107f68b1b5549,d,d
-::#,19044,ret,zh-tw,3847943439,2827208804,ce3228aeef53026e855b7e801af053cf671d8028,7000019f4ea8a1543510edac72b7422c11fba614,d,c
-::#,19044,vol,ar-sa,3612099816,2608924615,592b137403a33de3a65fc8627c9c302eb99b8503,53314023b382f417f680fa3a86bec67abb4cd4ee,d,d
-::#,19044,vol,bg-bg,3697846870,2643154509,a4eef7e8931df6de993feb80a02f62eaeec3d203,5b7c4dfc630aad93ddf54623ea91068680c15979,d,d
-::#,19044,vol,cs-cz,3692596997,2635344230,751ce37644b30bb9505a2e2ca5e4f7754a68bfcf,403d52e6194e6aec3dacfae8687c8f1e5add4ec0,d,d
-::#,19044,vol,da-dk,3704128097,2651866271,0db04507e77c9320f9819f3539303fc3feeb4cab,210888e11e925a92c485a0e63b07c7415e754de2,d,d
-::#,19044,vol,de-de,3823847980,2762651311,d15e7496d0398df3f0fb783121451673ed46a251,257a02f3fccfdee64a70730ef7d3f3e32d724201,d,d
-::#,19044,vol,el-gr,3703869061,2651223648,e70d60dced2b134321d9d2efd627e9ae80cbc970,435bbbf4696a6692f15ae3f44062a95eccf62c8b,d,d
-::#,19044,vol,en-gb,3783983624,2724423940,313c8d6cd31926b8c1d4ad9f629aa4341cd245a0,106d544672f7648f939027e987de6eea55070b1e,d,c
-::#,19044,vol,en-us,3771806711,2728353866,f14877775a20d3ddae31a37b60f987ea25038849,ccf5c5fbdebcf1458e421a8927ef3748f9aa7858,d,d
-::#,19044,vol,es-es,3793925818,2735954540,956213400eec879b0e093be4762efaa467495328,89d054faa4bfd42b64847563456b2d20a802c7d4,c,d
-::#,19044,vol,es-mx,3605500646,2606066824,1678fefb9a6099c828379b4f885e09e16f977941,b3c2f791b8919d14e0c4676034b1145c8e19bdc0,d,d
-::#,19044,vol,et-ee,3654647807,2607852924,b871e7720d3d7478e0f115f950b18b93c2ca6149,53a3266694f0371ef161341ba89aad2e5200b6c4,d,d
-::#,19044,vol,fi-fi,3698009058,2637592943,bd05ce4268f704143e6e14913a4f7067f1693697,76383ee8f2d0da04ef826f1f0e89f92ace01e43f,d,c
-::#,19044,vol,fr-ca,3644862039,2640968912,89b9b4bc09846e48d45535dde98ea5bd2b17d4dd,d5385dcb8fe4f598f3d6b4631f074f756517062b,d,c
-::#,19044,vol,fr-fr,3782145988,2725842492,422cc7bdc54211927c3b81285f301a671f859ab4,6671e3585e2e3b9cbace24834c8e7482c50fa7d2,d,d
-::#,19044,vol,he-il,3606666289,2600729128,9d4a26cdfc012a1a63843b8ea45ff390f7b55fee,9735c63e753d09960ea4ac3c91b09022752d51da,d,c
-::#,19044,vol,hr-hr,3669851954,2619476733,3484cc709840b155be52370d79c8fd2e399efcb3,50394551269053282a71e7469aa8983f11c4d599,c,d
-::#,19044,vol,hu-hu,3691524338,2633847939,e2e96eabee4c71bf2f9fc7cf1a0e433ffe8ef629,707cd20805a5ad5edb4f82744564564808582ccb,c,c
-::#,19044,vol,it-it,3742133072,2682251348,eb89375c4e197297929edafff5c4721fa9b75f8e,bd26167ae58f5c599c5c2b8161892017b8305016,c,c
-::#,19044,vol,ja-jp,3793212106,2785687896,da7e5a62cc7730a0652c57b49f90d31ba9e620ce,7de389623f13ba671efe30eca5d09a53b94b131d,c,d
-::#,19044,vol,ko-kr,3611869248,2611261196,7b9d7977dce94531057542f3b0264888ad1025bf,98cafc7736467ff2cae9e2f89f91ada18ae630a9,c,c
-::#,19044,vol,lt-lt,3660903666,2611745850,19d18dfd5c0c280365685eb340fe3484d45f0474,d12d18d047fb1a30ab8eedd9fae5ea3e4b146145,c,c
-::#,19044,vol,lv-lv,3658861117,2614452708,8dc426b1e43a5fc9868017e1f8b10b4432a1b39a,36f9f3031f0e12119205ccd820ef32356d926bc1,c,c
-::#,19044,vol,nb-no,3685480918,2632166383,697b6664721661a4453ed726ba3a92fab7295f4e,50b4efbd46066063ac94d40778acea33f4378e5c,c,c
-::#,19044,vol,nl-nl,3696806300,2637681992,a676f87bbcd737ba8cce066de6f64c2a60f346a6,0f85acb1ef570e87ba4aec98cff583ca590c49be,c,d
-::#,19044,vol,pl-pl,3718091496,2659399838,52d44fb9600774c3bcf2d569c55b52cb316f6e33,a8001c33202d39d51a289aba131e8618b1a9e7c8,c,c
-::#,19044,vol,pt-br,3608287071,2608373675,8db19b78fd623837b29539cb3223618d9b27f354,e6e11ea31ad8eaa8ad0eb9818d565b0aa38d96e6,c,d
-::#,19044,vol,pt-pt,3706865141,2653249486,885cde8560f3122ee27e5004866feb182e36cb65,a9c18e7a338e415e081c53b1132f5d2e8f2e19cb,d,c
-::#,19044,vol,ro-ro,3667093441,2621093032,5a0a183d063abfdab8ca487278053726c0c6b00c,7b5f712149d68080a76bb3ef5cf2a59314745d72,d,d
-::#,19044,vol,ru-ru,3609509838,2612551579,731bd411de449597bc1e80ad6d1627613f1f2eb8,2ce1a6df64f1b66d4020d9d0ddade4b8138a08b5,d,d
-::#,19044,vol,sk-sk,3677140332,2620353215,a341180c3cca692bf45e7733c03d0b4f60b06759,d502a5ecfff2c0926c1bf6744a7c389e9e0cb9ac,d,d
-::#,19044,vol,sl-si,3679353516,2622334578,da74011a137f7a9782a83d1b602f15f10368122c,bf2c8d58d4cff8bbae11be2fccec78ced903270c,d,d
-::#,19044,vol,sr-rs,3535335239,2546215484,6037336d4593c82050c85ab466f707a12296ac24,71d3661853c2d5f6fb720c32ff8a5c25144403fc,d,d
-::#,19044,vol,sv-se,3689298098,2638167104,2188105ce4d62a7f50a50517b3498b7a0c289220,c77168dfa8280a9d7fa7ad206cae471ce5597641,d,d
-::#,19044,vol,th-th,3559515902,2560679441,f98898e1289199b7d575e3964fcba4dedfebde75,a9e01bd9df7eeeeff281b62bb0aae7af964f684b,c,d
-::#,19044,vol,tr-tr,3558246344,2559515634,d41a9f61c4f0891b338b253058ea3591f16f8280,097412ef3157b080be0a093557d24e22a0299a60,d,d
-::#,19044,vol,uk-ua,3560300978,2560869654,ef8b3d474e7ad1e17af42944e24dcd959d9827a2,5023d2cd938ff1546f7f8c392cb1b42ddd94b0cf,c,d
-::#,19044,vol,zh-cn,3803796929,2805393938,d262ad930f0f5554a061d2cb77ce3d305a3a65c0,d26a5e87bb96535b3704d671c69aab338925f2e1,d,c
-::#,19044,vol,zh-tw,3780899927,2785302702,f941f292e144189917ace0a03ada3002940c2232,ef2887d062fa12cf23fee5a5570f329e7969ad5d,d,d
+::#,19043,ret,ar-sa,3796522540,2713987215,a96b496237751f6ba7f5db7e1d150564e3a1f6a0,fdeb6956321ecce439c0c346710befb36dc43032,c,c
+::#,19043,ret,bg-bg,3855537865,2738961802,a4660f3182dbb0884e1312bcc8e7644f68c4abf4,79650464fbdc6dfcf01ccfefe5d84a13ff63367f,d,d
+::#,19043,ret,cs-cz,3860257648,2730367672,2a6b3d2c48c48ae4bafe9d28af87ef351234e950,c972560c64f3e2f624d39ec713dccf135f75dd05,c,d
+::#,19043,ret,da-dk,3872048120,2748761262,a0eb5f64e28d6e71dc36bf06e1da52ab9020c824,2ab6a2292146673fcdfa57ffdb5bf9cd15707edb,d,d
+::#,19043,ret,de-de,3989757892,2854635078,30ac163215805d63cd91bbedcbf6b533ed3f407d,5cf792c1f99fdc93076a1d38b3780a2206cc4f99,c,d
+::#,19043,ret,el-gr,3866106347,2748627157,7f8c53497f6ded42e640e56e918aa1fa7d6e5d81,e1705142d2ab3d536675aab29e6ae90011d825b0,d,d
+::#,19043,ret,en-gb,3973458712,2841800898,82049141cc986140614746b509305869f906e56f,ff5724e9e1f18adf1eec3db2d6a71910f9679606,d,d
+::#,19043,ret,en-us,3974282652,2850851984,97ae12fd67d7607c94c39656e2b2f84ff9083874,086af468927c859b65211bb0d344934e702ee9d1,d,c
+::#,19043,ret,es-es,3989398530,2850298612,65ef4f350f8f7c14c1d33deeb0eccd19bf9d0a2b,16a4b847adf026a2664a6b808c0c7d7653ccc20c,c,c
+::#,19043,ret,es-mx,3786477145,2714499292,188d86355450598505b27199b40b160095b67f63,934c7a8526ac30e046bfb40008a0f0944efebb67,d,c
+::#,19043,ret,et-ee,3825511706,2704661560,b452cdfd122d0d2675b464aafb7c252ab2bf6960,ab64678f056c20ab55993e5ca92e2eb6fe026a58,d,c
+::#,19043,ret,fi-fi,3858209670,2732403980,123662c2857e6b404b0b57c397c4086fe7ff1960,98c1c6f19656d27ba7d1b33af6796f79e129bb3f,c,d
+::#,19043,ret,fr-ca,3799344776,2724854454,6ed180fd6c455a912f9521bf356a2a4a987d5e5b,290794e08365ed208a5788cbe895907265cd95ae,d,d
+::#,19043,ret,fr-fr,3978409144,2848422250,d364ea01a0b89d1c7000ee96ee1f9c8c64a5e780,a922cba662d35ec5336e900344710c7a9d3b65b0,d,c
+::#,19043,ret,he-il,3756567981,2680256700,8d06b301277c86f18a2f882a2514aa416d63045b,2a1fca0d8ce7f06dc9e1b93c0cf6abd2254a6204,d,d
+::#,19043,ret,hr-hr,3840082670,2715740460,43b350a90d09187635cf7003adab8ea1108e7887,5a25211b17e10bfadb5f09ba77e221989323fede,c,d
+::#,19043,ret,hu-hu,3855334400,2723746022,ede315a7f48ae622f8c7abca458d19822e16369f,c46d7f82189e12b86c6c16d442ab8fb40bfeefc9,d,c
+::#,19043,ret,it-it,3898167798,2778674122,232eb5cd9e0d819e3e41a35b505cb76d2b88dbaf,5fed2da6d2063bbb67745a1948bf100c36d6cb53,c,c
+::#,19043,ret,ja-jp,3934462658,2873797746,03cbd112658d3ac55d3d3082a8e1cd8fb1f6fde1,997d01f63ce38310fcbcfaac7ab9f7af9c793628,c,d
+::#,19043,ret,ko-kr,3767999298,2702420272,243ed271b7f5c5b3618afe598d604467f12c0954,5d073595a84195221d72ef871fe1b6d63cd16e9b,c,d
+::#,19043,ret,lt-lt,3834528626,2709606672,22c27ed2afb0662b234e56ef3d92d1f53eb00218,7e09cf821207440a89bcc5da914075c4e41960c1,d,c
+::#,19043,ret,lv-lv,3831132668,2708793194,9d389cc1c57ae29a7ddde3b59cdcf59d5ab18536,79f96301a6fcffbb0c6681ee576ad172a919e429,c,d
+::#,19043,ret,nb-no,3849883280,2726927211,887e4a9560ac6a389da978d7b7f3f390bde33ddd,4eab8264057c4e323beda781a5cf2ae1a5271b4c,d,c
+::#,19043,ret,nl-nl,3854357670,2732550676,7a160fcd48ecf3e0dbd0c20875aedd6b86bb68b4,2cd49b1bc6b87390e309bb39795b2b1b889d2d4d,d,c
+::#,19043,ret,pl-pl,3879400120,2753211546,89aef4609e5ddf0a5cdb08568c0af9b8638fa618,f5bf3ae2c565091f18967d0b6c679adbe7a09fb7,c,d
+::#,19043,ret,pt-br,3790366014,2718398488,ffe1ec2f72cb407ce0d405d0a1a2ae90cb4a360d,147a5ac5642df489d6f54568962fdd1a5686d6f3,d,d
+::#,19043,ret,pt-pt,3899594242,2768338085,1048ee46185479234f6bd49f40ef529d5c5f5a29,42f65ebf1614b80ce2ffc064e2948e4389467b05,d,c
+::#,19043,ret,ro-ro,3837675212,2712810336,94e714deac7caa30c04d88fdcbfdef13a0f03465,1042981cb1c50aa78b9e161b5a3e83ae65276ec2,c,d
+::#,19043,ret,ru-ru,3783746859,2715809468,a1928240c8fef564914a5eb09dacae32d24f4887,2413775bd23d0ee2db14afa7e318ec829c54fe48,c,d
+::#,19043,ret,sk-sk,3842413417,2724595046,90e24345650de6050bc59af840881b28bfcada25,c8060187c27569f37f334fdb72f90d16669edb5f,d,d
+::#,19043,ret,sl-si,3834982238,2722513656,9ab5530f86b6f890c6ccceea0765d0d0ad3ee875,a519880ceca8720c7305f2d0cab370da94b7a9a2,c,c
+::#,19043,ret,sr-rs,3725972670,2651869220,568e0ca59daae2ed06273b022428676e7d620475,b2a0f952d4506bcc46348f2394306976105a38dc,c,d
+::#,19043,ret,sv-se,3849856794,2730842070,d4fc52b4840f37c481c98ec921d57e6b5b3e7606,18229ccaa8d1da39c69f5131909cc68daeb7a1bc,d,c
+::#,19043,ret,th-th,3735662520,2662934830,da093d61dfef8cdee09e89e3cd89c995c7cd2683,f28de6698962d9fae24a04767a81ebe3448b3025,d,d
+::#,19043,ret,tr-tr,3734875173,2659088703,90572949d4770ce9dbac075a14e64bbdd8b01cc5,515547efa30a54e00eb0c36ce792f9060c018807,d,d
+::#,19043,ret,uk-ua,3739508766,2666501848,e2e5933eddea1d21cf19da9f72ab5b6187f98141,c498e85cd3787c6d84c20b4aef2339fa62f776b7,d,d
+::#,19043,ret,zh-cn,3983536850,2917424552,eea323e2b883527bc0030086427cd999addce5c8,5dc44eb6649d5aa4ef0bb62aaa8a9c830c123108,d,c
+::#,19043,ret,zh-tw,3937475768,2873543704,a7cb5baa5a0bc9ea8ef71447974e3828d2a680fc,234d34a84cfff105b74988711dba42e018fb585d,d,d
+::#,19043,vol,ar-sa,3681349114,2646952460,ac4eb087416cbf43f95d2947226b0400ffaa7ded,a5c2ef6265c6d3b532b80bde986409434f30626d,d,d
+::#,19043,vol,bg-bg,3769063484,2680914283,150972ec66bcb963c4bf5557cc84e9b74b2f5896,77b22b31e37e8035f907804e8dfc94d648a4a747,d,d
+::#,19043,vol,cs-cz,3765230072,2671454164,84e7cb7a6b8ceb4aab38840eea2e5865f7e25170,659f8dfbc1198bd58641e597cd57159291e41bc9,d,d
+::#,19043,vol,da-dk,3801864686,2696475548,54150711b4b461f05d58fa9bf6a0051f4da2d0c0,fa80f90cf45a4fe1e7c794d0d60bff4deefe91dd,d,d
+::#,19043,vol,de-de,3895418564,2803314922,a93fbcba42b4d93a267bed61644099594c77a645,bc70f4b6fd45dce05ceb9ac3aab14b241aa69857,d,d
+::#,19043,vol,el-gr,3798485628,2694033004,d9440fe1ddb90be7a5fd944ef0163e6aa9b1207d,a38faab6ef7875066f380d76fb8f71a76ca27c99,d,c
+::#,19043,vol,en-gb,3861880618,2763193856,27cf2cc20097af85ad40fbf7d29a4ddaa0b17f1b,6e25a693c5bae912b23050ea093c00040d81f558,d,d
+::#,19043,vol,en-us,3862540292,2771733936,1f2d5c58815a486a9e67220aad3133b0bd45d0fa,5ff7197abe3c121fdddbe1b29f3458a124f66fdc,d,d
+::#,19043,vol,es-es,3863207544,2771570820,fb0d0dd3b32cfdfa4280a9283005327746934227,347454d4cb18c18a2a55bcd60f071aa324fa2580,d,d
+::#,19043,vol,es-mx,3692920220,2652566433,744f78d58d1c9761a7b18f1faeb41d7127a561b3,5c0b72a67346309baed354ffe495471ffa063003,d,d
+::#,19043,vol,et-ee,3746211708,2653310406,3e49e62cc76b39503fe38b7778a6bd7f454ba1d5,f9f99bcd52967b9b8cc4cb48753bcfb502ba541e,c,c
+::#,19043,vol,fi-fi,3775617860,2674949366,c5fcbad8fb3f65f716e5765c1a65b3a60c09bd58,d280e6407e92c0d2b16d08aaee5c7d80e174e1a0,d,d
+::#,19043,vol,fr-ca,3723802142,2679860708,ad148616be82e9def492a7521879d5c34941c8b0,421e462990adb46ce461dd58a0c251cc1e1a66c4,d,d
+::#,19043,vol,fr-fr,3877126596,2772626392,71e1e96bae79bcad1f58f7bc5133c0ec3a7c7ce3,3c69e6a461e3406c00116b9a2af6294c6460e6e0,c,d
+::#,19043,vol,he-il,3678136944,2634537427,8e76b34503f79c906993c96e2e2e630be43c55cb,f2f06cb6d9a2d3d336c3f980b1ae1f1207751a46,d,d
+::#,19043,vol,hr-hr,3758351648,2661855904,f50fa37afcbe2fcfa756bd2d755e2025f055da74,f1f3f1ce8d3b6b1a04ea443aa12e3f762ad6bd35,c,d
+::#,19043,vol,hu-hu,3767182826,2671837114,c2aa0171f4ceae2e681cb11c45a44bb024d8b798,434cfeb94753630a258e44a37c08f0849020bfa8,d,c
+::#,19043,vol,it-it,3824166620,2720100031,90ea853626fb3a9648ec7c22fbd3568cd44793d8,20c837b00595cfc542d5ed3e366cb295c1a2d016,c,d
+::#,19043,vol,ja-jp,3852227440,2825404136,8f46bb0ae601e21d35478b64a0effaa6033ce970,9904a2328dffc1f644992c34f6cb425c1c98004a,c,d
+::#,19043,vol,ko-kr,3694555939,2653883816,ea1f2db1435385f602e2ca5189a69c38f348d788,960f3775af64f723d396053ad6a99eeedacdbdeb,d,d
+::#,19043,vol,lt-lt,3749684208,2653888476,16b48b9fc69ea7bb8e7b750f1f13a180552d39ed,3cfbb1d7e6de564c508f2925d8e2aa58ded4a846,c,d
+::#,19043,vol,lv-lv,3748672775,2654182536,20c2f975c26552bccf32463960285f59e1a4b3bc,1410b8221237df0953fcf79a6b99b5e1610decf6,d,d
+::#,19043,vol,nb-no,3762419328,2668386204,92c91748692c2a5938c4b0289ac66f9bc40ff46e,68069570fe5bb157c02ee70f3eff68a9667d9419,d,c
+::#,19043,vol,nl-nl,3765536364,2672762084,33557696b5101175cb1661a9c580644a2d3b0717,c937b7557e722c6f22916e745f550834ab94096b,c,c
+::#,19043,vol,pl-pl,3784633312,2695364514,b6a6417fe0ccad754d5b674c61153742f4eb9aa4,892094ba23aaf275396fdec144372d1fe3daef54,d,c
+::#,19043,vol,pt-br,3699874600,2652863862,49da78fe39acb44af7a8db3d0195fedc6cb80830,a57ac3dc593fa03b44bd9a9646d0630af2236f12,c,c
+::#,19043,vol,pt-pt,3790454870,2689698006,8d19690c39bdecb71783e1f648214f4ed286d953,e6bfa05b5d299d6fb53621d8711060934b2e52fe,d,d
+::#,19043,vol,ro-ro,3761724551,2661041381,ae3a8daf40546b56fad5182ac1c9ba2a56da72da,62f8c112efe4cb32662e8b178b9eb115e2240ca5,d,d
+::#,19043,vol,ru-ru,3693672396,2652263480,6c5d3e7a58fa81d0ed5b848f698afc5422743798,0f71c6005db675c9e217b95d3bc8e5ccf1137c7c,d,d
+::#,19043,vol,sk-sk,3759652048,2666413270,e3d7dadd39c8f9810882bed9e25894bb24d5a6d5,06636d71f4b3f22d4262b216a392fd5611776f57,d,d
+::#,19043,vol,sl-si,3762134544,2663536467,c2b702c8aed12c8777ec53500d1216aa79822e69,b5b8e1f9760bb8809ad84b653ec87a70d0daed92,d,d
+::#,19043,vol,sr-rs,3628255006,2587775675,903985c87681f71f10fc9638903b848405b8055e,c6cd4e35386c6bc4d3364b209091bc1bc5ce1ae0,c,d
+::#,19043,vol,sv-se,3769014224,2672801020,3e4a47daf9dc81a3e55456f5e7c051d6d51e4bcb,1ea327d60d75c6ffea8e43e32fbcf21dc071197c,d,c
+::#,19043,vol,th-th,3637149024,2605428657,55a39c175b421d0c6725963bf522135ef58ac838,92488a66f198944850cc46bf5c9d14031e3a8130,d,d
+::#,19043,vol,tr-tr,3632409366,2597318406,2896780089c51fd4925b5461f78e37260fb96f4e,32c59dc3791a14404d289612467f5600d3642ee1,c,d
+::#,19043,vol,uk-ua,3633073140,2601657108,d3d06977ed2de7352489317563099c80093125cd,c5a6725fc7b6e5e58d680259ab827de6621f919f,d,d
+::#,19043,vol,zh-cn,3885377254,2847833439,d6cc640b4cbc484e5d41cc966b3e105193c18ffd,dcdcfca5a388059e2db9cb55e950f29282bec529,d,c
+::#,19043,vol,zh-tw,3856202777,2825194480,fac5d12d42d7aa7bbcad36b1314923a776e1a5c9,ae7a1a1d9212269227330c5298687887a1f5621d,d,d
