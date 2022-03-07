@@ -13,7 +13,7 @@ if %i% GTR 3 goto ato
 cscript //nologo slmgr.vbs /skms %KMS%:1688 >nul
 :ato
 echo ============================================================================&echo.&echo.&cscript //nologo slmgr.vbs /ato | find /i "successfully" && (echo.&echo ============================================================================&echo.&echo #My official blog: MSGuides.com&echo.&echo #How it works: bit.ly/kms-server&echo.&echo #Please feel free to contact me at msguides.com@gmail.com if you have any questions or concerns.&echo.&echo #Please consider supporting this project: donate.msguides.com&echo #Your support is helping me keep my servers running 24/7!&echo.&echo ============================================================================&choice /n /c YN /m "Would you like to visit my blog [Y,N]?" & if errorlevel 2 exit) || (echo The connection to my KMS server failed! Trying to connect to another one... & echo Please wait... & echo. & echo. & set /a i+=1 & goto skms)
-explorer "http://MSGuides.com"&goto halt
+explorer "http://github.com/EdwardThong"&goto halt
 :notsupported
 echo ============================================================================&echo.&echo Sorry, your version is not supported.&echo.&goto halt
 :busy
