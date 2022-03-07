@@ -49,5 +49,4 @@ $_Paste_in_Powershell = { $Code = @'
  $F = gwmi -Class __EventFilter -NameSpace $U -Filter "Name='$N'" -ea 0; $B,$C,$F |% {$_|rwmi -ea 0}; timeout /t 5
 } ; start -verb runas powershell -args "-nop -c & {`n`n$($_Paste_in_Powershell-replace'"','\"')}"
 $_Press_Enter
-#::ss_Enter
 #::
