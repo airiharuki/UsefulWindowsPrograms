@@ -1,7 +1,7 @@
 # UsefulWindowsProgram
 **Windows Related Batch files** is a repository that owned by me, every batch content that was in here is going to help you sometimes soon, anyways don't mess with some stuff, 
 or your pc will be fucked up. Anyways, you'll find some good windows batch right here, created by me! (some batches are not mine), feel free to go through it!
-<br>**Ultimate tool** is a tool that let you shut down your PC without going to he start menu.
+<br>**Ultimate tool** is a tool that let you shut down your PC without going to the start menu.
 <br>**OfflineInsiderEnroll** is a program to enable access to the Windows Insider Program on machines not signed in with Microsoft Account or unable to enroll due to an error. Make sure to run this script as administrator!
 <br>**Office365Activator** is a a program that lets you activate your Microsoft Office for free! (also used to activate office 2016)
 <br>**Windows10Activator** is a a program that lets you activate your Windows for free!
