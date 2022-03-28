@@ -12,3 +12,5 @@ or your pc will be fucked up. Anyways, you'll find some good windows batch right
 <br>**Office2021Activator** is a a program that lets you activate your Microsoft Office 2021 for free!
 
 Note: Change the repository name to WindowsRelatedBatch to UsefulWindowsProgram on 12 March, 2022 :D
+
+P.S: Every code and software that exists here are under Mozilla Public License 2.0. 
